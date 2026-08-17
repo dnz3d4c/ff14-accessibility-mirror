@@ -76,6 +76,14 @@ internal static unsafe class NodeVisibilityCompat
     /// <summary>Address in use, for the log. Zero before Install.</summary>
     internal static nint Address { get; private set; }
 
+    /// <summary>The game's own code range, so an address can be told apart from a
+    /// pointer into this assembly. Filled by <see cref="Install"/>.</summary>
+    private static nint _gameCodeStart;
+    private static nint _gameCodeEnd;
+
+    private static bool InGameCode(nint pointer)
+        => pointer >= _gameCodeStart && pointer < _gameCodeEnd;
+
     /// <summary>
     /// Gives ClientStructs an address for IsVisible if it has none. Called from
     /// the plugin constructor before any service exists, so the first node read
@@ -83,9 +91,29 @@ internal static unsafe class NodeVisibilityCompat
     /// </summary>
     internal static void Install(ISigScanner scanner, IPluginLog log)
     {
+        _gameCodeStart = scanner.TextSectionBase;
+        _gameCodeEnd = scanner.TextSectionBase + scanner.TextSectionSize;
+
         var address = AtkResNode.Addresses.IsVisible;
+        if (address.Value != nint.Zero && !InGameCode(address.Value))
+        {
+            // Only one thing can put a non-game address here: the replica of a
+            // previous instance of this plugin. Its stub died with that
+            // assembly, so calling it would crash the game - drop it and resolve
+            // from scratch.
+            log.Warning($"[Compat] IsVisible pointed at 0x{address.Value:X}, outside the game's "
+                        + "code - a replica left by an earlier load. Discarded, resolving again.");
+            address.Value = nint.Zero;
+        }
+
         if (address.Value != nint.Zero)
         {
+            // Either ClientStructs resolved it (every non-Korean client) or an
+            // earlier load of this plugin installed it and left it in place on
+            // purpose - see Uninstall. Said this way rather than as "the game
+            // resolved it", because from here the two are indistinguishable.
+            log.Information($"[Compat] AtkResNode::IsVisible already set to 0x{address.Value:X} "
+                            + "- left alone.");
             Source = CompatSource.GameFunction;
             Address = address.Value;
             return;
@@ -105,6 +133,37 @@ internal static unsafe class NodeVisibilityCompat
         Address = address.Value;
         log.Warning("[Compat] AtkResNode::IsVisible: no address and no Korean signature match - "
                     + "using the managed replica, which can answer differently than the game.");
+    }
+
+    /// <summary>
+    /// Takes back the managed replica on plugin unload - and ONLY that.
+    ///
+    /// NOT optional, because AtkResNode.Addresses is a static in the ClientStructs
+    /// assembly, which lives in Dalamud's load context rather than the plugin's.
+    /// An address written there outlives the plugin, and the replica's stub does
+    /// not: it dies with this assembly, so ClientStructs would be left calling
+    /// into freed code.
+    ///
+    /// A game address is left alone on purpose. Zeroing one costs more than it
+    /// looks, and that was measured, not guessed: with the address null,
+    /// Dalamud's OWN DtrBar.FixCollision throws on every _DTR draw
+    /// (InvalidOperationException, 9 of them inside a half-second reload window,
+    /// 2026-08-18 00:11:56). The game's function is valid for the life of the
+    /// process and other Dalamud code depends on it being there, so it stays.
+    ///
+    /// The cost of leaving it: after a dev reload the next Install finds an
+    /// address already set and reports GameFunction, which understates who found
+    /// it. That is a dev-only artifact - a normal session loads once - and it is
+    /// logged as "already set" rather than as a fresh resolution.
+    /// </summary>
+    internal static void Uninstall()
+    {
+        var current = AtkResNode.Addresses.IsVisible.Value;
+        if (current == nint.Zero || InGameCode(current)) return;
+
+        AtkResNode.Addresses.IsVisible.Value = nint.Zero;
+        Source = CompatSource.GameFunction;
+        Address = nint.Zero;
     }
 
     /// <summary>The one address the Korean signature matches, or zero if it
