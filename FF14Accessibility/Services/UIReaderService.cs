@@ -95,6 +95,12 @@ public sealed class UIReaderService : IDisposable
     // Gesetzt bei InputReceived � Dump wird im n�chsten PostUpdate ausgef�hrt,
     // NACHDEM das Spiel intern den Fokus verschoben hat (nicht davor).
     private bool _dumpOnNextTitleMenuUpdate;
+    // Gesetzt bei PostSetup: die Eroeffnungsansage steht noch aus und wird vom
+    // PostUpdate-Pfad nachgeholt, sobald das Menue vollstaendig ist.
+    private bool _titleMenuOpeningAnnouncePending;
+    // Frames, die wir schon auf ein vollstaendiges Menue warten. Deckelt das
+    // Warten ab, damit bei einem leeren Menue nicht einfach nichts gesagt wird.
+    private int _titleMenuOpeningWaitFrames;
     private ScreenContext _activeScreenContext = ScreenContext.None;
 
     // ConfigSystem state
@@ -4298,15 +4304,22 @@ public sealed class UIReaderService : IDisposable
         }
 
         // Men�-Eintr�ge lesen und ansagen
-        var selection = GetTitleMenuSelection(addon);
-        if (selection.Count <= 0 || string.IsNullOrWhiteSpace(selection.Item))
-        {
-            _tolk.SpeakInterrupt(AccessibilityStrings.MainMenu);
-            return;
-        }
-
-        RememberTitleMenuSelection(selection.Item, selection.Index);
-        _tolk.SpeakInterrupt($"{AccessibilityStrings.MainMenu}. {FormatTitleMenuSelection(selection.Item, selection.Index, selection.Count)}");
+        // Hier NICHT lesen. Bei PostSetup steht das Addon zwar, aber die
+        // Beschriftungen der Buttons sind noch nicht alle gesetzt - die Liste
+        // kommt zu kurz zurueck. Gemessen am 18.08.2026: die Eroeffnung sagte
+        // "1 von 5", zwoelf Sekunden spaeter zeigte der Button-Dump sechs
+        // Buttons (id4 bis id9) und die Pfeiltasten sagten "1 von 6".
+        //
+        // Eine zu kleine Zahl ist nicht kosmetisch: wer nicht sieht, baut sein
+        // Bild des Menues aus genau dieser Ansage. Wer "von 5" hoert, sucht den
+        // sechsten Eintrag nicht.
+        //
+        // Deshalb uebernimmt der PostUpdate-Pfad die Ansage. Der laeuft ohnehin
+        // jeden Frame, liest dasselbe Menue erst wenn es fertig ist, und hat die
+        // richtige Zahl schon immer geliefert.
+        ResetTitleMenuState();
+        _titleMenuOpeningAnnouncePending = true;
+        _titleMenuOpeningWaitFrames = 0;
     }
 
     private unsafe void OnTitleMenuReceive(AddonEvent type, AddonArgs args)
@@ -8234,11 +8247,30 @@ public sealed class UIReaderService : IDisposable
         }
 
         var selection = GetTitleMenuSelection(addon);
-        if (selection.Count <= 0 || string.IsNullOrWhiteSpace(selection.Item)) return;
+        if (selection.Count <= 0 || string.IsNullOrWhiteSpace(selection.Item))
+        {
+            // Nichts zu lesen. Steht die Eroeffnungsansage aus, warten wir - aber
+            // nicht endlos: nach etwa einer Sekunde sagen wir wenigstens, dass das
+            // Hauptmenue offen ist. Schweigen waere von einem Defekt nicht zu
+            // unterscheiden.
+            if (_titleMenuOpeningAnnouncePending && ++_titleMenuOpeningWaitFrames > 60)
+            {
+                _titleMenuOpeningAnnouncePending = false;
+                _tolk.SpeakInterrupt(AccessibilityStrings.MainMenu);
+            }
+            return;
+        }
         if (selection.Index == _lastTitleMenuIndex && selection.Item == _lastTitleMenuText) return;
 
+        // Erste vollstaendige Lesung nach dem Oeffnen: mit "Hauptmenue" davor,
+        // damit die Ansage dieselbe bleibt wie frueher - nur eben mit der Zahl,
+        // die stimmt.
+        var opening = _titleMenuOpeningAnnouncePending;
+        _titleMenuOpeningAnnouncePending = false;
+
         RememberTitleMenuSelection(selection.Item, selection.Index);
-        _tolk.SpeakInterrupt(FormatTitleMenuSelection(selection.Item, selection.Index, selection.Count));
+        var line = FormatTitleMenuSelection(selection.Item, selection.Index, selection.Count);
+        _tolk.SpeakInterrupt(opening ? $"{AccessibilityStrings.MainMenu}. {line}" : line);
     }
 
     private unsafe (string Item, int Index, int Count) GetTitleMenuSelection(AtkUnitBase* addon)
