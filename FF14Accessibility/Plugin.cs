@@ -36,6 +36,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] private IGameInventory          GameInventory   { get; init; } = null!;
     [PluginService] private IToastGui               ToastGui        { get; init; } = null!;
     [PluginService] private IGameInteropProvider    Interop         { get; init; } = null!;
+    // Only the Korean compatibility layer uses this: one signature the Korean
+    // binary needs and ClientStructs does not carry (see Compat/CompatReport.cs).
+    [PluginService] private ISigScanner             SigScanner      { get; init; } = null!;
     // IGameConfig steht weiter oben - drei Nutzer, eine Deklaration (Chat-Filter,
     // Bewegungsmodus). PR #6 brachte eine zweite mit, die hier entfallen ist.
     // [Tiefes Gewoelbe] Loest die Makros in Sheet-Texten so auf, wie das Spiel es tut. Die
@@ -272,6 +275,11 @@ public sealed class Plugin : IDalamudPlugin
         // before the first Speak below.
         Loc.Mode = _config.Language;
 
+        // Before any service exists: a service that reads a node must already
+        // find node visibility answerable. Reports itself to the log, and to
+        // speech below if an answer can differ from the game's.
+        CompatReport.Install(SigScanner, Log);
+
         TolkNative.Initialize(PluginInterface.AssemblyLocation.DirectoryName!);
         _tolk       = new TolkService(Log);
         // Cue VOR Beacon: der Peil-Ton braucht ihn fuer den Einrast-Ton, der
@@ -478,6 +486,11 @@ public sealed class Plugin : IDalamudPlugin
 
         Log.Info($"FF14 Accessibility Plugin V{PluginVersion} [{PluginVersionTag}] geladen.");
         _tolk.Speak(AccessibilityStrings.VersionReady(PluginVersion));
+        // Speak() queues, so this follows the greeting instead of cutting it off.
+        // Null unless an answer the game normally gives is now approximated -
+        // silence about that is indistinguishable from a healthy client.
+        if (CompatReport.StartupNotice is { } notice)
+            _tolk.Speak(notice);
     }
 
     private void RegisterCommands()
@@ -488,7 +501,7 @@ public sealed class Plugin : IDalamudPlugin
         // /acc stop â†’ Sprache stoppen
         CommandManager.AddHandler("/acc", new CommandInfo(OnCommand)
         {
-            HelpMessage = "FF14 Accessibility: nav, set, near, keys, stop, help"
+            HelpMessage = "FF14 Accessibility: nav, set, near, keys, compat, stop, help"
         });
     }
 
@@ -561,6 +574,13 @@ public sealed class Plugin : IDalamudPlugin
                 break;
             case "keys":
                 _keybinds.DumpKeybinds(GetPluginKeys());
+                break;
+            // Which answers come from the game and which from the Korean
+            // compatibility layer - askable at any time, so the startup
+            // announcement does not have to be remembered.
+            case "compat":
+                Log.Info($"[Compat] {CompatReport.OnDemand}");
+                _tolk.SpeakInterrupt(CompatReport.OnDemand);
                 break;
             case "fish":
                 _fishing.AnnounceSpotsInCurrentZone();
