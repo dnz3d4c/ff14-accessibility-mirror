@@ -7893,7 +7893,12 @@ public sealed class UIReaderService : IDisposable
     /// CharaMake*/TitleDCWorldMap so Enter keeps its game meaning elsewhere.
     /// </summary>
     // Confirm-button labels in priority order (German client).
-    private static readonly string[] ConfirmButtonLabels = ["Ok", "Bestätigen"];
+    // "확인" is the Korean client's label, read out of a live node dump of
+    // _CharaMakeProgress and _CharaMakeFeature (KR 2026.08.05.0000.0000,
+    // 2026-08-17): both confirm buttons are Comp(1001) with the text child
+    // "확인". Without it PressFocusedOk logs "kein Ok-Button" on every step of
+    // character creation and the appearance step cannot be left at all.
+    private static readonly string[] ConfirmButtonLabels = ["Ok", "Bestätigen", "확인"];
 
     public unsafe void PressFocusedOk()
     {
