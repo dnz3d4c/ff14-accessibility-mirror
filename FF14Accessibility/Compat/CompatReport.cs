@@ -52,6 +52,10 @@ internal static class CompatReport
                         + $"{(GearsetMarkCompat.AnswersByItemId ? "item id" : "game function")}.");
     }
 
+    /// <summary>Hands back everything the probes took over. Call from
+    /// Plugin.Dispose - what this undoes would otherwise outlive the plugin.</summary>
+    internal static void Uninstall() => NodeVisibilityCompat.Uninstall();
+
     /// <summary>What to say once at startup, or null when every answer is the
     /// game's own.</summary>
     internal static string? StartupNotice
