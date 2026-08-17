@@ -2361,6 +2361,9 @@ public sealed class Plugin : IDalamudPlugin
         _cue.Dispose();
         _vitals.Dispose();
         _tolk.Dispose();
+        // Last: the compatibility layer wrote into a ClientStructs static, which
+        // belongs to Dalamud's load context and would outlive this assembly.
+        CompatReport.Uninstall();
     }
 }
 
