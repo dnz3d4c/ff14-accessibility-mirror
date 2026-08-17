@@ -31,8 +31,6 @@ public sealed partial class InstallerService
 
     private const string AccessibilityRepoOwner = "derbruedi";
     private const string AccessibilityRepoName = "ff14-accessibility";
-    private const string XivLauncherRepoOwner = "goatcorp";
-    private const string XivLauncherRepoName = "FFXIVQuickLauncher";
     private const string VnavmeshRepositoryJsonUrl = "https://puni.sh/api/repository/veyn";
 
     // ── Wegdateien für die Kategorie "Dungeon" ─────────────────────────────
@@ -62,15 +60,18 @@ public sealed partial class InstallerService
     private const int DungeonPathsMaxEntryBytes = 2 * 1024 * 1024;
     private const long DungeonPathsMaxTotalBytes = 64L * 1024 * 1024;
 
-    // Selbst-Update: kleines Manifest-Asset im Release, das die Installer-Version
-    // trägt. Der EXE-Dateiname bleibt bewusst versionslos (stabiler Download-Link).
+    // Selbst-Update: im KR-Build inaktiv (RunAsync ruft es nicht auf), weil es
+    // noch keinen Release-Kanal gibt. Der Apparat bleibt aber stehen - ihn zu
+    // loeschen macht jedes Rebase auf einen neuen Upstream-Stand teurer, und
+    // sobald ein Kanal existiert, ist es ein Einzeiler in RunAsync.
     private const string InstallerManifestAssetName = "installer.json";
     private const string InstallerExeAssetName = "FF14AccessibilityInstaller.exe";
 
-    private static readonly string XivLauncherRoot =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "XIVLauncher");
-    private static readonly string DevPluginsRoot = Path.Combine(XivLauncherRoot, "devPlugins");
-    private static readonly string DalamudConfigPath = Path.Combine(XivLauncherRoot, "dalamudConfig.json");
+    // Korean build: the profile is XIVLauncherKR and nothing creates it for us.
+    // See KrProfile for why each piece matters.
+    private static readonly string XivLauncherRoot = KrProfile.Root;
+    private static readonly string DevPluginsRoot = KrProfile.DevPluginsRoot;
+    private static readonly string DalamudConfigPath = KrProfile.ConfigPath;
 
     /// <summary>Wohin die Wegdateien gehören. MUSS mit
     /// <c>DungeonRouteService.PathFolder</c> im Plugin übereinstimmen - das
@@ -113,21 +114,15 @@ public sealed partial class InstallerService
         Info(Loc.Get("InstallerHeader", ownVersion));
         Info(string.Empty);
 
-        // Zuerst der Installer selbst: sonst würde erst installiert und danach
-        // neu gestartet, und der Nutzer müsste den ganzen Ablauf zweimal hören.
-        if (await TrySelfUpdateAsync(ownVersion))
-            return true;
-        Info(string.Empty);
+        // Kein Selbst-Update im KR-Build: es gibt (noch) keinen Release-Kanal,
+        // aus dem sich dieser Installer beziehen koennte. Der Aufruf bliebe sonst
+        // bei jedem Start an GitHub haengen und meldete nichts Brauchbares.
 
         try
         {
-            Info(Loc.Get("CheckingXivLauncher"));
-            if (!Directory.Exists(XivLauncherRoot))
-            {
-                await HandleMissingXivLauncherAsync();
-                return false; // Nutzer muss erst einloggen/Dalamud aktivieren/Spiel starten.
-            }
-            Info(Loc.Get("XivLauncherFound"));
+            Info(Loc.Get("KrCheckingProfile"));
+            if (!PrepareKrProfile())
+                return false; // Dalamud fehlt - der Nutzer muss erst den Updater laufen lassen.
             Info(string.Empty);
 
             var accResult = await UpdateAccessibilityPluginAsync(ownVersion);
@@ -156,159 +151,117 @@ public sealed partial class InstallerService
         return false;
     }
 
-    // ── XIVLauncher ────────────────────────────────────────────────────────
+    // ── KR-Profil ──────────────────────────────────────────────────────────
 
-    private async Task HandleMissingXivLauncherAsync()
+    /// <summary>
+    /// Baut die Teile des Profils, die der koreanische Launcher nicht baut, und
+    /// prueft danach, ob Dalamud ueberhaupt da ist. Gibt false zurueck, wenn der
+    /// Nutzer erst den KR-Updater laufen lassen muss.
+    ///
+    /// Der globale Installer laedt an dieser Stelle XIVLauncher herunter. Das
+    /// geht hier nicht: den koreanischen Client bedient ein eigener Launcher,
+    /// und Dalamud kommt aus einer fremden Patch-Pipeline, die wir bewusst nicht
+    /// weiterverteilen.
+    /// </summary>
+    private bool PrepareKrProfile()
     {
-        Warn(Loc.Get("XivLauncherNotInstalled1"));
-        Warn(Loc.Get("XivLauncherNotInstalled2", XivLauncherRoot));
-        Info(Loc.Get("XivLauncherNeeded"));
-        Info(Loc.Get("DownloadingXivLauncherAuto"));
+        var created = KrProfile.Bootstrap();
+        if (created.Count > 0)
+            Info(Loc.Get("KrProfileCreated", string.Join(", ", created)));
+        else
+            Info(Loc.Get("KrProfileFound"));
 
-        (string tag, string url, string name)? asset;
-        try
+        var runtime = KrProfile.EnsureRuntimeVariable();
+        if (runtime != null)
         {
-            var release = await GetLatestReleaseAsync(XivLauncherRepoOwner, XivLauncherRepoName);
-            asset = PickAsset(release, n => n.EndsWith("Setup.exe", StringComparison.OrdinalIgnoreCase));
-        }
-        catch (HttpRequestException ex)
-        {
-            Error(Loc.Get("GitHubUnreachable", ex.Message));
-            Error(Loc.Get("InstallXivLauncherManually1"));
-            Error(Loc.Get("RunProgramAgain"));
-            return;
-        }
-        catch (TaskCanceledException)
-        {
-            Error(Loc.Get("TimeoutFetchXivLauncher"));
-            return;
+            Info(Loc.Get("KrRuntimeVariableSet", runtime));
+            Info(Loc.Get("KrRuntimeNeedsRestart"));
         }
 
-        if (asset == null)
-        {
-            Error(Loc.Get("NoXivLauncherSetupFound"));
-            Error(Loc.Get("InstallXivLauncherManually2"));
-            return;
-        }
+        if (KrProfile.DalamudInstalled)
+            return true;
 
-        var (version, url, assetName) = asset.Value;
-        var setupPath = Path.Combine(Path.GetTempPath(), assetName);
-
-        try
-        {
-            Info(Loc.Get("DownloadingXivLauncherVersion", version, assetName));
-            await DownloadFileAsync(url, setupPath, "XIVLauncher-Setup");
-        }
-        catch (HttpRequestException ex)
-        {
-            Error(Loc.Get("DownloadFailedInstallManually", ex.Message));
-            Error(Loc.Get("UrlAndRunAgain"));
-            return;
-        }
-        catch (TaskCanceledException)
-        {
-            Error(Loc.Get("TimeoutDownloadRetry"));
-            return;
-        }
-        catch (IOException ex)
-        {
-            Error(Loc.Get("XivLauncherSaveFailed", ex.Message));
-            return;
-        }
-
-        Info(Loc.Get("InstallingXivLauncherSilent"));
-        try
-        {
-            var psi = new ProcessStartInfo(setupPath)
-            {
-                Arguments = "--silent",
-                UseShellExecute = true,
-            };
-            using var proc = Process.Start(psi);
-            if (proc != null)
-                await Task.Run(() => proc.WaitForExit(180_000)); // 3 Minuten Timeout, danach machen wir trotzdem weiter.
-            Info(Loc.Get("XivLauncherInstallStarted"));
-        }
-        catch (Exception ex)
-        {
-            Warn(Loc.Get("AutoInstallNotConfirmed", ex.Message));
-            Warn(Loc.Get("RunSetupManuallyHint"));
-            Warn("  " + setupPath);
-        }
-
-        Info(string.Empty);
-        Info(Loc.Get("LoginHint1"));
-        Info(Loc.Get("LoginHint2"));
-        Info(Loc.Get("LoginHint3"));
+        Warn(Loc.Get("KrDalamudMissing"));
+        Info(Loc.Get("KrDalamudGetIt"));
+        Info("  " + KrProfile.UpdaterPath);
+        Info(Loc.Get("KrDalamudThenCheckUpdate"));
+        return false;
     }
 
     // ── Eigenes Plugin (FF14Accessibility) ────────────────────────────────
 
-    private async Task<string> UpdateAccessibilityPluginAsync(string ownVersion)
+    /// <summary>
+    /// Installiert das Plugin aus dem lokalen Build statt aus einem GitHub-Release.
+    ///
+    /// Der Grund ist nicht Bequemlichkeit: das Release-Binary des Upstreams ist
+    /// gegen FFXIVClientStructs 7.55 gebunden, das koreanische Dalamud liefert
+    /// 7.51. Es wuerde laden und beim ersten Gearset-Aufruf werfen. Was hier
+    /// installiert wird, muss also aus diesem Checkout kommen.
+    /// </summary>
+    private Task<string> UpdateAccessibilityPluginAsync(string ownVersion)
     {
-        Info(Loc.Get("CheckingAccessibilityVersion"));
+        Info(Loc.Get("KrLookingForLocalBuild"));
+
+        var zipPath = KrProfile.FindLocalBuild();
+        if (zipPath == null)
+        {
+            Warn(Loc.Get("KrNoLocalBuild"));
+            Info(Loc.Get("KrBuildHint"));
+            return Task.FromResult(Loc.Get("KrErrorNoLocalBuild"));
+        }
+
+        var targetDir = Path.Combine(DevPluginsRoot, AccessibilityInternalName);
+        var manifestPath = Path.Combine(targetDir, AccessibilityInternalName + ".json");
+        var localVersion = ReadLocalManifestVersion(manifestPath);
+        var wasInstalled = localVersion != null;
+
+        string extractDir = Path.Combine(Path.GetTempPath(), "FF14AccExtract_" + Guid.NewGuid());
         try
         {
-            var release = await GetLatestReleaseAsync(AccessibilityRepoOwner, AccessibilityRepoName);
-
-            var asset = PickAsset(release, n =>
-                n.StartsWith("FF14Accessibility-v", StringComparison.OrdinalIgnoreCase) &&
-                n.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
-            if (asset == null)
-            {
-                Warn(Loc.Get("NoAccessibilityAssetFound"));
-                return Loc.Get("ErrorNoReleaseAsset");
-            }
-
-            var (tag, url, _) = asset.Value;
-            var remoteVersion = tag.TrimStart('v', 'V');
-
-            var targetDir = Path.Combine(DevPluginsRoot, AccessibilityInternalName);
-            var manifestPath = Path.Combine(targetDir, AccessibilityInternalName + ".json");
-            var localVersion = ReadLocalManifestVersion(manifestPath);
-
-            if (localVersion != null && !IsNewer(remoteVersion, localVersion))
-            {
-                Info(Loc.Get("AccessibilityUpToDate", localVersion));
-                return Loc.Get("UpToDateShort", localVersion);
-            }
-
-            Info(Loc.Get("DownloadingAccessibility", remoteVersion));
-            var zipPath = Path.Combine(Path.GetTempPath(), "FF14Accessibility_" + Guid.NewGuid() + ".zip");
-            await DownloadFileAsync(url, zipPath, "FF14 Accessibility");
-
-            var extractDir = Path.Combine(Path.GetTempPath(), "FF14AccExtract_" + Guid.NewGuid());
             ZipFile.ExtractToDirectory(zipPath, extractDir);
+
+            // Version aus dem frisch entpackten Manifest, nicht aus dem Dateinamen -
+            // der Packager schreibt sie dort hinein und nur die stimmt.
+            var builtVersion =
+                ReadLocalManifestVersion(Path.Combine(extractDir, AccessibilityInternalName + ".json"))
+                ?? Loc.Get("UnknownVersion");
+
+            Info(Loc.Get("KrUsingLocalBuild", builtVersion, zipPath));
             DeployPluginFiles(extractDir, targetDir);
 
-            var wasInstalled = localVersion != null;
             Info(wasInstalled
-                ? Loc.Get("AccessibilityUpdated", remoteVersion)
-                : Loc.Get("AccessibilityInstalled", remoteVersion));
-            return wasInstalled
-                ? Loc.Get("UpdatedToShort", remoteVersion)
-                : Loc.Get("NewlyInstalledShort", remoteVersion);
+                ? Loc.Get("AccessibilityUpdated", builtVersion)
+                : Loc.Get("AccessibilityInstalled", builtVersion));
+            return Task.FromResult(wasInstalled
+                ? Loc.Get("UpdatedToShort", builtVersion)
+                : Loc.Get("NewlyInstalledShort", builtVersion));
         }
         catch (IOException ex)
         {
             Error(Loc.Get("CouldNotWritePluginFiles", ex.Message));
             Error(Loc.Get("CloseGameAndLauncher"));
-            return Loc.Get("ErrorFilesLocked");
-        }
-        catch (HttpRequestException ex)
-        {
-            Error(Loc.Get("AccessibilityGitHubUnreachable", ex.Message));
-            return Loc.Get("ErrorNoNetworkGitHub");
-        }
-        catch (TaskCanceledException)
-        {
-            Error(Loc.Get("AccessibilityDownloadTimeout"));
-            return Loc.Get("ErrorTimeout");
+            return Task.FromResult(Loc.Get("ErrorFilesLocked"));
         }
         catch (Exception ex)
         {
             Error(Loc.Get("AccessibilityUnexpectedError", ex.Message));
-            return Loc.Get("ErrorGeneric");
+            return Task.FromResult(Loc.Get("ErrorGeneric"));
+        }
+        finally
+        {
+            TryDeleteDirectory(extractDir);
+        }
+    }
+
+    private static void TryDeleteDirectory(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, recursive: true);
+        }
+        catch (Exception)
+        {
+            // Aufraeumen darf die Installation nicht scheitern lassen.
         }
     }
 

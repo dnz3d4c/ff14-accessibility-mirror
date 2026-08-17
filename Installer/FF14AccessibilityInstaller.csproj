@@ -6,7 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>FF14AccessibilityInstaller</AssemblyName>
+    <AssemblyName>FF14AccessibilityInstaller-KR</AssemblyName>
     <!-- Eigene Installer-Version. Wird im Fenster angezeigt und beim Start gegen
          das Release-Asset "installer.json" im ff14-accessibility-Repo verglichen.
          Ist dort eine hoehere Version hinterlegt, aktualisiert sich der Installer
