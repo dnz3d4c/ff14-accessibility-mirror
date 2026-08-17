@@ -1,3 +1,6 @@
+using System.Linq;
+using System.Reflection;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
@@ -30,7 +33,10 @@ namespace FF14Accessibility;
 /// has ItemId, no container or slot), so the fallback can only answer per ID
 /// and says yes for both copies. That is the same direction of error upstream
 /// already accepts in IsAnyCopyRegisteredToGearset, and for the same reason:
-/// a missing "do not sell" warning costs more than a surplus one.
+/// a missing "do not sell" warning costs more than a surplus one. Tightening it
+/// by comparing materia and dyes would err the other way and drop warnings, so
+/// the imprecision stays - but <see cref="Probe"/> makes it audible instead of
+/// silent.
 /// </summary>
 internal static unsafe class GearsetMarkCompat
 {
@@ -41,6 +47,32 @@ internal static unsafe class GearsetMarkCompat
 
     /// <summary>RaptureGearsetModule.Entries is a fixed array of 100.</summary>
     private const int GearsetSlots = 100;
+
+    /// <summary>True when this shim - not the game - answers the question, so
+    /// the mark goes by item id. Set by <see cref="Probe"/>.</summary>
+    internal static bool AnswersByItemId { get; private set; }
+
+    /// <summary>
+    /// Reports which of the two is in play. The binding was decided by the
+    /// compiler, so this asks the same question the compiler did: does the
+    /// ClientStructs in use declare the method? Those two answers agree exactly
+    /// as long as the plugin runs against the assembly it was built against -
+    /// which is also the condition for the call site working at all.
+    /// </summary>
+    internal static void Probe(IPluginLog log)
+    {
+        var gameAnswers = typeof(RaptureGearsetModule)
+            .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Any(m => m.Name == nameof(IsItemRegisteredToGearset));
+
+        AnswersByItemId = !gameAnswers;
+        if (AnswersByItemId)
+            log.Warning("[Compat] RaptureGearsetModule::IsItemRegisteredToGearset is absent from "
+                        + "this ClientStructs - the gearset mark answers per item id, so both "
+                        + "copies of a duplicate piece are marked.");
+        else
+            log.Information("[Compat] Gearset mark uses the game's own per-instance answer.");
+    }
 
     /// <summary>
     /// Whether any saved gearset references this item's id.
