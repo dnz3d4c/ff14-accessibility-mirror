@@ -15,15 +15,18 @@ public static class Loc
 {
     public const string German = "de";
     public const string English = "en";
+    public const string Korean = "ko";
 
-    /// <summary>Currently active UI language ("de" or "en"). Defaults to German.</summary>
-    public static string Current { get; set; } = German;
+    /// <summary>Currently active UI language. The Korean build defaults to Korean.</summary>
+    public static string Current { get; set; } = Korean;
 
     public static string Get(string key)
     {
         if (Texts.TryGetValue(Current, out var dict) && dict.TryGetValue(key, out var value))
             return value;
-        if (Texts[German].TryGetValue(key, out var fallback))
+        // Fallback auf Englisch, nicht Deutsch: was hier durchfaellt, liest sonst
+        // ein koreanischer Nutzer als deutschen Satz vor.
+        if (Texts[English].TryGetValue(key, out var fallback))
             return fallback;
         return key;
     }
@@ -47,7 +50,7 @@ public static class Loc
             if (doc.RootElement.TryGetProperty("language", out var langProp))
             {
                 var lang = langProp.GetString();
-                if (lang == German || lang == English) return lang;
+                if (lang == German || lang == English || lang == Korean) return lang;
             }
         }
         catch
@@ -259,6 +262,20 @@ public static class Loc
             ["LanguageDialogTitle"] = "Sprache wählen / Choose language",
             ["LanguageGermanButton"] = "Deutsch",
             ["LanguageEnglishButton"] = "English",
+            ["KrCheckingProfile"] = "Pruefe das koreanische Profil ...",
+            ["KrProfileFound"] = "Profil vorhanden.",
+            ["KrProfileCreated"] = "Fehlende Teile angelegt: {0}",
+            ["KrRuntimeVariableSet"] = "DALAMUD_RUNTIME gesetzt: {0}",
+            ["KrRuntimeNeedsRestart"] = "Das Spiel muss danach neu gestartet werden - Prozesse erben die Umgebung beim Start.",
+            ["KrDalamudMissing"] = "Koreanisches Dalamud ist noch nicht installiert.",
+            ["KrDalamudGetIt"] = "Bitte zuerst den KR-Dalamud-Updater ausfuehren und \"Check Update\" druecken:",
+            ["KrDalamudThenCheckUpdate"] = "Danach dieses Programm erneut starten.",
+            ["KrLookingForLocalBuild"] = "Suche den lokalen Build des Plugins ...",
+            ["KrNoLocalBuild"] = "Kein gebautes Plugin gefunden.",
+            ["KrBuildHint"] = "Bitte zuerst run\build.bat ausfuehren.",
+            ["KrUsingLocalBuild"] = "Verwende lokalen Build {0} aus {1}",
+            ["KrErrorNoLocalBuild"] = "Fehler: kein lokaler Build vorhanden.",
+            ["LanguageKoreanButton"] = "한국어",
         },
         [English] = new Dictionary<string, string>
         {
@@ -419,6 +436,126 @@ public static class Loc
             ["LanguageDialogTitle"] = "Sprache wählen / Choose language",
             ["LanguageGermanButton"] = "Deutsch",
             ["LanguageEnglishButton"] = "English",
+            ["KrCheckingProfile"] = "Checking the Korean profile ...",
+            ["KrProfileFound"] = "Profile found.",
+            ["KrProfileCreated"] = "Created the missing pieces: {0}",
+            ["KrRuntimeVariableSet"] = "DALAMUD_RUNTIME set to: {0}",
+            ["KrRuntimeNeedsRestart"] = "The game has to be started fresh after this - a process inherits its environment at launch.",
+            ["KrDalamudMissing"] = "Korean Dalamud is not installed yet.",
+            ["KrDalamudGetIt"] = "Run the KR Dalamud updater first and press \"Check Update\":",
+            ["KrDalamudThenCheckUpdate"] = "Then start this program again.",
+            ["KrLookingForLocalBuild"] = "Looking for the locally built plugin ...",
+            ["KrNoLocalBuild"] = "No built plugin found.",
+            ["KrBuildHint"] = "Run run\build.bat first.",
+            ["KrUsingLocalBuild"] = "Using local build {0} from {1}",
+            ["KrErrorNoLocalBuild"] = "Error: no local build available.",
+            ["LanguageKoreanButton"] = "한국어",
+        },
+
+        [Korean] = new Dictionary<string, string>
+        {
+            // 한국어는 KR 흐름이 실제로 보여주는 키만 갖는다. 나머지는 Get()이
+            // 영어로 떨어뜨린다 - 안 쓰는 문장 130개를 번역해 두면 그게 낡는다.
+            ["WarnPrefix"] = "경고: ",
+            ["ErrorPrefix"] = "실패: ",
+            ["UnknownVersion"] = "알 수 없음",
+            ["InstallerHeader"] = "FF14 접근성 모드 설치기 (한국 서버용, 버전 {0})",
+
+            ["KrCheckingProfile"] = "한국 서버 프로필을 확인한다 ...",
+            ["KrProfileFound"] = "프로필이 있다.",
+            ["KrProfileCreated"] = "없던 것을 만들었다: {0}",
+            ["KrRuntimeVariableSet"] = "DALAMUD_RUNTIME을 걸었다: {0}",
+            ["KrRuntimeNeedsRestart"] = "이 값은 게임을 새로 켜야 반영된다. 프로세스는 시작할 때 환경을 물고 간다.",
+            ["KrDalamudMissing"] = "한국 서버용 Dalamud가 아직 없다.",
+            ["KrDalamudGetIt"] = "먼저 KR Dalamud 업데이터를 실행해 \"Check Update\"를 누른다:",
+            ["KrDalamudThenCheckUpdate"] = "그 다음 이 프로그램을 다시 실행한다.",
+
+            ["KrLookingForLocalBuild"] = "빌드해 둔 플러그인을 찾는다 ...",
+            ["KrNoLocalBuild"] = "빌드된 플러그인이 없다.",
+            ["KrBuildHint"] = "먼저 run\build.bat을 실행한다.",
+            ["KrUsingLocalBuild"] = "로컬 빌드 {0}을 쓴다 ({1})",
+            ["KrErrorNoLocalBuild"] = "실패: 빌드된 플러그인이 없다.",
+
+            ["AccessibilityUpdated"] = "접근성 모드를 {0}으로 갱신했다.",
+            ["AccessibilityInstalled"] = "접근성 모드 {0}을 설치했다.",
+            ["UpdatedToShort"] = "{0}으로 갱신",
+            ["NewlyInstalledShort"] = "{0} 새로 설치",
+            ["UpToDateShort"] = "{0} - 이미 최신",
+            ["CouldNotWritePluginFiles"] = "플러그인 파일을 쓰지 못했다: {0}",
+            ["CloseGameAndLauncher"] = "FINAL FANTASY XIV와 업데이터를 완전히 끄고 다시 시도한다.",
+            ["ErrorFilesLocked"] = "실패: 파일이 잠겨 있다.",
+            ["AccessibilityUnexpectedError"] = "예상 못 한 오류: {0}",
+            ["ErrorGeneric"] = "실패",
+            ["ErrorTimeout"] = "실패: 시간 초과",
+            ["ErrorNotFound"] = "실패: 찾지 못함",
+
+            ["CheckingVnavmeshVersion"] = "vnavmesh 버전을 확인한다 ...",
+            ["VnavmeshPunishUnreachable"] = "puni.sh 저장소에 닿지 못했다: {0}",
+            ["ErrorNoNetworkPunish"] = "실패: puni.sh에 연결하지 못함",
+            ["VnavmeshPunishTimeout"] = "puni.sh 응답이 시간 초과됐다.",
+            ["VnavmeshNotFound"] = "저장소 목록에 vnavmesh가 없다.",
+            ["VnavmeshNoDownloadLink"] = "vnavmesh 내려받기 주소가 없다.",
+            ["ErrorNoDownloadLink"] = "실패: 내려받기 주소 없음",
+            ["VnavmeshUpToDate"] = "vnavmesh {0} - 이미 최신이다.",
+            ["AutoWalkNeedsVnav1"] = "자동 이동은 vnavmesh 플러그인이 있어야 동작한다.",
+            ["AutoWalkNeedsVnav2"] = "이 플러그인은 우리가 만든 것이 아니고 재배포하지도 않는다 - 원 저장소에서 직접 받는다.",
+            ["AutoWalkNeedsVnav3"] = "설치하지 않으면 자동 이동만 빠지고 나머지는 그대로 동작한다.",
+            ["AskSetupVnavmesh"] = "vnavmesh를 설치할까?",
+            ["VnavmeshSkipped"] = "vnavmesh를 건너뛰었다.",
+            ["SkippedShort"] = "건너뜀",
+            ["DownloadingVnavmesh"] = "vnavmesh {0}을 내려받는다 ...",
+            ["VnavmeshUpdated"] = "vnavmesh를 {0}으로 갱신했다.",
+            ["VnavmeshSetup"] = "vnavmesh {0}을 설치했다.",
+            ["NewlySetupShort"] = "{0} 새로 설치",
+            ["VnavmeshCouldNotWriteFiles"] = "vnavmesh 파일을 쓰지 못했다: {0}",
+            ["VnavmeshDownloadFailed"] = "vnavmesh를 내려받지 못했다: {0}",
+            ["ErrorNoNetwork"] = "실패: 연결하지 못함",
+            ["VnavmeshDownloadTimeout"] = "vnavmesh 내려받기가 시간 초과됐다.",
+            ["VnavmeshUnexpectedError"] = "vnavmesh 처리 중 예상 못 한 오류: {0}",
+
+            ["ConfigNotExist1"] = "dalamudConfig.json이 없다.",
+            ["ConfigNotExist2"] = "게임을 한 번 실행해 Dalamud를 붙이면 만들어진다.",
+            ["ConfigNotExist3"] = "그 다음 이 프로그램을 다시 실행한다.",
+            ["ConfigNotExist4"] = "",
+            ["ConfigMissingReturn"] = "실패: dalamudConfig.json이 없다.",
+            ["ConfigReadFailed"] = "dalamudConfig.json을 읽지 못했다: {0}",
+            ["ConfigReadFailedReturn"] = "실패: dalamudConfig.json을 읽지 못함",
+            ["ConfigParseFailed"] = "dalamudConfig.json을 해석하지 못했다: {0}",
+            ["ConfigNotTouching"] = "손대지 않는다 - 망가뜨리는 쪽이 더 비싸다.",
+            ["ConfigInvalidReturn"] = "실패: dalamudConfig.json이 깨져 있다.",
+            ["ConfigUnexpectedStructure"] = "설정 구조가 예상과 다르다.",
+            ["ConfigSafetyNoChange1"] = "안전을 위해 아무것도 바꾸지 않았다.",
+            ["ConfigSafetyNoChange2"] = "게임을 한 번 실행한 뒤 다시 시도한다.",
+            ["ConfigUnexpectedStructureReturn"] = "실패: 설정 구조가 예상과 다름",
+            ["ConfigUpdated"] = "설정을 갱신했다. 백업: {0}",
+            ["ProfileStructureUnexpected"] = "DefaultProfile이 없어 플러그인을 켜지 못했다.",
+            ["ProfileStructureUnexpectedReturn"] = "실패: 등록은 했으나 켜지 못함 (DefaultProfile 없음)",
+            ["PluginsRegisteredEnabledReturn"] = "플러그인을 등록하고 켰다.",
+            ["ConfigWriteFailed"] = "dalamudConfig.json을 쓰지 못했다: {0}",
+            ["ConfigWriteFailedReturn"] = "실패: dalamudConfig.json을 쓰지 못함 (파일이 잠겼나?)",
+
+            ["SummaryHeader"] = "== 결과 ==",
+            ["SummaryAccessibility"] = "접근성 모드: {0}",
+            ["SummaryVnavmesh"] = "vnavmesh: {0}",
+            ["UnexpectedError"] = "예상 못 한 오류: {0}",
+            ["NoPartialWrite"] = "중간까지 쓰다 만 것은 없다.",
+            ["DownloadProgress"] = "{0}: {1} 퍼센트 ...",
+
+            ["WindowTitle"] = "FF14 접근성 모드 설치기 (한국 서버)",
+            ["MainTitleWithVersion"] = "FF14 접근성 모드 설치기, 한국 서버용 (버전 {0})",
+            ["MainTitleAccessibleName"] = "FF14 접근성 모드 설치기, 한국 서버용, 버전 {0}",
+            ["LogBoxAccessibleName"] = "진행 상황",
+            ["LogBoxAccessibleDescription"] = "설치기의 진행과 결과 메시지. 화살표 키로 읽는다.",
+            ["InstallButtonText"] = "설치 / 갱신",
+            ["InstallButtonAccessibleName"] = "설치하거나 갱신한다",
+            ["ExitButtonText"] = "끝내기",
+            ["ExitButtonAccessibleName"] = "끝내기",
+            ["OperationCompleted"] = "끝났다. 자세한 것은 창의 진행 상황 영역에서 읽는다.",
+
+            ["LanguageDialogTitle"] = "언어 선택 / Choose language",
+            ["LanguageGermanButton"] = "Deutsch",
+            ["LanguageEnglishButton"] = "English",
+            ["LanguageKoreanButton"] = "한국어",
         },
     };
 }
