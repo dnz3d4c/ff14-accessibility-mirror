@@ -6,14 +6,14 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>FF14AccessibilityInstaller</AssemblyName>
+    <AssemblyName>FF14AccessibilityInstaller-KR</AssemblyName>
     <!-- Eigene Installer-Version. Wird im Fenster angezeigt und beim Start gegen
          das Release-Asset "installer.json" im ff14-accessibility-Repo verglichen.
          Ist dort eine hoehere Version hinterlegt, aktualisiert sich der Installer
          nach Rueckfrage selbst (InstallerService.TrySelfUpdateAsync + SelfUpdate).
          MUSS beim Release mit dem Feld InstallerVersion in installer.json
          uebereinstimmen, sonst bietet der Installer das Update endlos erneut an. -->
-    <Version>1.1.0</Version>
+    <Version>1.1.0-kr.1</Version>
     <AssemblyVersion>1.1.0.0</AssemblyVersion>
     <FileVersion>1.1.0.0</FileVersion>
     <!-- Barrierefreiheit: WinForms-GUI. Standardcontrols (Label, TextBox, Button)

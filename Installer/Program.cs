@@ -7,6 +7,18 @@ internal static class Program
     {
         var args = Environment.GetCommandLineArgs();
 
+        // --check sagt nur, was der Installer vorfindet; --bootstrap legt zusaetzlich
+        // die fehlenden Profilteile an. Beide beenden sich danach. Die GUI kann man
+        // nicht ohne Maus/Bildschirm pruefen, diese Aufloesung schon - und sie ist
+        // genau das, was bei "es passiert nichts" fehlt.
+        var check = Array.IndexOf(args, "--check") >= 0;
+        var bootstrap = Array.IndexOf(args, "--bootstrap") >= 0;
+        if (check || bootstrap)
+        {
+            KrCheck.Run(bootstrap);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
 
         // Phase 2 des Selbst-Updates: aus %TEMP% gestartet, ersetzt die
@@ -50,6 +62,10 @@ internal static class Program
         Application.Run(new MainForm());
     }
 
+    /// <summary>
+    /// Vorauswahl im Sprachdialog. Der KR-Build faellt auf Koreanisch zurueck,
+    /// nicht auf Englisch - wer ihn benutzt, spielt auf dem koreanischen Client.
+    /// </summary>
     private static string DefaultLanguage()
-        => Loc.SystemLanguageIsGerman() ? Loc.German : Loc.English;
+        => Loc.SystemLanguageIsGerman() ? Loc.German : Loc.Korean;
 }
