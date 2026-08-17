@@ -11,26 +11,27 @@ namespace FF14AccessibilityInstaller;
 /// </summary>
 public sealed class LanguageDialog : Form
 {
-    public string SelectedLanguage { get; private set; } = Loc.German;
+    public string SelectedLanguage { get; private set; } = Loc.Korean;
 
+    private readonly Button _koreanButton;
     private readonly Button _germanButton;
     private readonly Button _englishButton;
 
     public LanguageDialog(string preselectedLanguage)
     {
-        Text = "Sprache wählen / Choose language";
-        AccessibleName = "Sprache wählen / Choose language";
+        Text = "언어 선택 / Choose language";
+        AccessibleName = "언어 선택 / Choose language";
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(360, 160);
+        ClientSize = new Size(360, 210);
         ShowInTaskbar = true;
 
         var label = new Label
         {
-            Text = "Sprache wählen / Choose language:",
-            AccessibleName = "Sprache wählen / Choose language",
+            Text = "언어 선택 / Choose language:",
+            AccessibleName = "언어 선택 / Choose language",
             AutoSize = false,
             Dock = DockStyle.Top,
             Height = 40,
@@ -46,6 +47,17 @@ public sealed class LanguageDialog : Form
             Padding = new Padding(24, 8, 24, 8),
         };
 
+        _koreanButton = new Button
+        {
+            Text = "한국어",
+            AccessibleName = "한국어",
+            AutoSize = false,
+            Width = 280,
+            Height = 40,
+            TabIndex = 0,
+        };
+        _koreanButton.Click += (_, _) => Choose(Loc.Korean);
+
         _germanButton = new Button
         {
             Text = "Deutsch",
@@ -53,7 +65,7 @@ public sealed class LanguageDialog : Form
             AutoSize = false,
             Width = 280,
             Height = 40,
-            TabIndex = 0,
+            TabIndex = 1,
         };
         _germanButton.Click += (_, _) => Choose(Loc.German);
 
@@ -64,24 +76,26 @@ public sealed class LanguageDialog : Form
             AutoSize = false,
             Width = 280,
             Height = 40,
-            TabIndex = 1,
+            TabIndex = 2,
         };
         _englishButton.Click += (_, _) => Choose(Loc.English);
 
+        buttonPanel.Controls.Add(_koreanButton);
         buttonPanel.Controls.Add(_germanButton);
         buttonPanel.Controls.Add(_englishButton);
 
         Controls.Add(buttonPanel);
         Controls.Add(label);
 
-        var preselectGerman = preselectedLanguage == Loc.German;
-        AcceptButton = preselectGerman ? _germanButton : _englishButton;
-
-        Load += (_, _) =>
+        var preselected = preselectedLanguage switch
         {
-            if (preselectGerman) _germanButton.Focus();
-            else _englishButton.Focus();
+            Loc.German => _germanButton,
+            Loc.English => _englishButton,
+            _ => _koreanButton,
         };
+        AcceptButton = preselected;
+
+        Load += (_, _) => preselected.Focus();
     }
 
     private void Choose(string language)
