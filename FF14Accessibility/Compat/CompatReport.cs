@@ -64,16 +64,16 @@ internal static class CompatReport
         {
             var notes = new List<string>();
             if (NodeVisibilityCompat.Source == CompatSource.Emulated)
-                notes.Add(Loc.IsGerman
-                    ? "Sichtbarkeit von Elementen wird nachgebildet."
-                    : "Element visibility is emulated.");
+                notes.Add(Loc.Pick("Sichtbarkeit von Elementen wird nachgebildet.",
+                                   "Element visibility is emulated.",
+                                   "화면 요소 표시 여부를 모드가 흉내 냄."));
             if (GearsetMarkCompat.AnswersByItemId)
-                notes.Add(Loc.IsGerman
-                    ? "Ausrüstungsset-Markierung geht nach Gegenstands-ID."
-                    : "Gearset marks go by item ID.");
+                notes.Add(Loc.Pick("Ausrüstungsset-Markierung geht nach Gegenstands-ID.",
+                                   "Gearset marks go by item ID.",
+                                   "장비세트 표시는 아이템 ID 기준."));
 
             if (notes.Count == 0) return null;
-            var prefix = Loc.IsGerman ? "Kompatibilitätshinweis: " : "Compatibility note: ";
+            var prefix = Loc.Pick("Kompatibilitätshinweis: ", "Compatibility note: ", "호환성 안내: ");
             return prefix + string.Join(" ", notes);
         }
     }
@@ -85,19 +85,21 @@ internal static class CompatReport
         {
             var visibility = NodeVisibilityCompat.Source switch
             {
-                CompatSource.GameFunction => Loc.IsGerman ? "Spielfunktion" : "the game's own function",
-                CompatSource.KoreanSignature => Loc.IsGerman
-                    ? "Spielfunktion über koreanische Signatur"
-                    : "the game's own function via the Korean signature",
-                _ => Loc.IsGerman ? "im Mod nachgebildet" : "emulated inside the mod",
+                CompatSource.GameFunction => Loc.Pick("Spielfunktion",
+                                                      "the game's own function",
+                                                      "게임 기능"),
+                CompatSource.KoreanSignature => Loc.Pick("Spielfunktion über koreanische Signatur",
+                                                         "the game's own function via the Korean signature",
+                                                         "게임 기능(한국어판 시그니처로 찾음)"),
+                _ => Loc.Pick("im Mod nachgebildet", "emulated inside the mod", "모드가 흉내 냄"),
             };
             var gearset = GearsetMarkCompat.AnswersByItemId
-                ? (Loc.IsGerman ? "nach Gegenstands-ID" : "by item ID")
-                : (Loc.IsGerman ? "Spielfunktion" : "the game's own function");
+                ? (Loc.Pick("nach Gegenstands-ID", "by item ID", "아이템 ID 기준"))
+                : (Loc.Pick("Spielfunktion", "the game's own function", "게임 기능"));
 
-            return Loc.IsGerman
-                ? $"Sichtbarkeit: {visibility}. Ausrüstungsset-Markierung: {gearset}."
-                : $"Visibility: {visibility}. Gearset marks: {gearset}.";
+            return Loc.Pick($"Sichtbarkeit: {visibility}. Ausrüstungsset-Markierung: {gearset}.",
+                            $"Visibility: {visibility}. Gearset marks: {gearset}.",
+                            $"표시 여부: {visibility}. 장비세트 표시: {gearset}.");
         }
     }
 }
