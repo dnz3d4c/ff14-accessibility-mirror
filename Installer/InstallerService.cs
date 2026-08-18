@@ -126,6 +126,12 @@ public sealed class InstallerService
     /// </summary>
     private bool PrepareKrProfile()
     {
+        // Immer nennen, auch wenn alles stimmt. Landet das Plugin im falschen
+        // Ordner, meldet nichts einen Fehler - der Updater legt sein eigenes
+        // leeres Profil an und injiziert das. Dann ist diese Zeile die einzige
+        // Spur, und die GUI koennen die Betroffenen nicht nachsehen.
+        Info(Loc.Get("KrProfileRoot", KrProfile.Root, KrProfile.RootSource()));
+
         var created = KrProfile.Bootstrap();
         if (created.Count > 0)
             Info(Loc.Get("KrProfileCreated", string.Join(", ", created)));
