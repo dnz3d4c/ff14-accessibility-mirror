@@ -535,11 +535,13 @@ public sealed class Plugin : IDalamudPlugin
 
         Log.Info($"FF14 Accessibility Plugin V{PluginVersion} [{PluginVersionTag}] geladen.");
         _tolk.Speak(AccessibilityStrings.VersionReady(PluginVersion));
-        // Speak() queues, so this follows the greeting instead of cutting it off.
-        // Null unless an answer the game normally gives is now approximated -
-        // silence about that is indistinguishable from a healthy client.
+        // The compatibility note is written, not spoken. It names an internal
+        // mechanism ("gearset marks go by item ID"), which is a sentence for a
+        // log, not for the first thing a player hears at every login. What it
+        // guards against is still covered: the line below always runs, and
+        // "/acc compat" says the full state out loud on demand.
         if (CompatReport.StartupNotice is { } notice)
-            _tolk.Speak(notice);
+            Log.Info($"[Compat] {notice}");
     }
 
     private void RegisterCommands()
