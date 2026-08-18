@@ -24,9 +24,12 @@ internal static class KrCheck
         // WinExe has no console of its own; borrow the caller's, or make one.
         if (!AttachConsole(-1)) AllocConsole();
 
-        var overridden = Environment.GetEnvironmentVariable(KrProfile.RootOverrideVariable);
-        if (!string.IsNullOrWhiteSpace(overridden))
-            Console.WriteLine($"[!! ] {KrProfile.RootOverrideVariable} is set - using {overridden}");
+        // Which of the three decided the root, always - not just when it was
+        // overridden. A root that silently disagrees with the updater's own
+        // setting is the one failure that produces no error anywhere.
+        Console.WriteLine($"[   ] {"root decided by",-20} {KrProfile.RootSource()}");
+        Line("updater settings", KrProfile.UpdaterSettingsPath,
+             File.Exists(KrProfile.UpdaterSettingsPath));
 
         if (bootstrap)
         {
