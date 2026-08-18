@@ -100,13 +100,15 @@ public static partial class AccessibilityStrings
 
     /// <summary>Eine An/Aus-Zeile: "Kartenmarkierung, an".</summary>
     public static string OptionToggle(string name, bool on) =>
-        IsGerman ? $"{name}, {(on ? "an" : "aus")}" : $"{name}, {(on ? "on" : "off")}";
+        Loc.IsKorean ? $"{name}, {(on ? "켜짐" : "꺼짐")}"
+        : IsGerman ? $"{name}, {(on ? "an" : "aus")}" : $"{name}, {(on ? "on" : "off")}";
 
     /// <summary>Wird im Moment des Umschaltens gesprochen. <c>Rebuild</c> frischt nur
     /// die Beschriftung auf und liest die Zeile bewusst nicht erneut vor - ohne diese
     /// Ansage wäre das Umschalten also stumm.</summary>
     public static string OptionToggled(string name, bool on) =>
-        IsGerman ? $"{name} {(on ? "an" : "aus")}." : $"{name} {(on ? "on" : "off")}.";
+        Loc.IsKorean ? $"{name} {(on ? "켜짐" : "꺼짐")}."
+        : IsGerman ? $"{name} {(on ? "an" : "aus")}." : $"{name} {(on ? "on" : "off")}.";
 
     /// <summary>Eine Lautstärke-Zeile: "Beacon, 35 Prozent" oder "Beacon, aus".</summary>
     public static string OptionVolume(string name, float volume) =>
