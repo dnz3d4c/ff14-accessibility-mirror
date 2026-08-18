@@ -113,6 +113,7 @@ public static partial class AccessibilityStrings
     // ── Sprachumschaltung (/acc lang) ────────────────────────────────
     public static string LanguageGerman  => IsGerman ? "Deutsch" : "German";
     public static string LanguageEnglish => IsGerman ? "Englisch" : "English";
+    public static string LanguageKorean  => IsGerman ? "Koreanisch" : "Korean";
 
     public static string LanguageSet(string language) =>
         IsGerman ? $"Sprache auf {language} umgestellt." : $"Language set to {language}.";
@@ -124,8 +125,8 @@ public static partial class AccessibilityStrings
 
     public static string LanguageUsage =>
         IsGerman
-            ? "Sprache wählen mit: /acc lang de, /acc lang en oder /acc lang auto."
-            : "Choose a language with: /acc lang de, /acc lang en or /acc lang auto.";
+            ? "Sprache wählen mit: /acc lang de, /acc lang en, /acc lang ko oder /acc lang auto."
+            : "Choose a language with: /acc lang de, /acc lang en, /acc lang ko or /acc lang auto.";
 
     public static string UnknownCommand =>
         IsGerman ? "Unbekannter Befehl. Tippe /acc help für Hilfe." : "Unknown command. Type /acc help for help.";
