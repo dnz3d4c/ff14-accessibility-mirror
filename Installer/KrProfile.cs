@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 
 namespace FF14AccessibilityInstaller;
 
@@ -40,19 +41,148 @@ internal static class KrProfile
     /// </summary>
     public const string RootOverrideVariable = "FF14ACC_KR_PROFILE";
 
+    /// <summary>
+    /// Where the Korean Dalamud updater keeps its user settings. Documented in
+    /// its own README-KR.txt, so this is a published location, not something
+    /// read out of the binary.
+    /// </summary>
+    private const string UpdaterSettingsDir = "KrDalamudUpdater";
+    private const string UpdaterSettingsName = "settings.json";
+    private const string ProfileRootKey = "ProfileRoot";
+
+    /// <summary>The updater's own default. We match it; we did not pick it.</summary>
+    private const string DefaultFolder = "XIVLauncherKR";
+
     /// <summary>Korean profile root. Sibling of the global XIVLauncher folder.</summary>
     public static readonly string Root = ResolveRoot();
 
+    /// <summary>
+    /// The profile root, and it has to be the same folder the updater will look
+    /// at afterwards.
+    ///
+    /// Getting this wrong does not raise anything. The updater reads its own
+    /// setting, finds nothing there, and creates an empty profile it then
+    /// injects - the game starts, Dalamud starts, and only the plugin is
+    /// missing. So the setting is what we ask, not what we assume.
+    ///
+    /// Order:
+    ///
+    ///   1. FF14ACC_KR_PROFILE - our own escape hatch, so it wins outright
+    ///   2. the updater's ProfileRoot, environment variables expanded
+    ///   3. %APPDATA%\XIVLauncherKR - the same value the updater defaults to
+    ///
+    /// Step 2 is read-only. Writing into another program's settings file is what
+    /// the vnavmesh rule forbids; reading a documented user setting is not, and
+    /// hardcoding is in fact the more coupled of the two - it bets both that
+    /// their default never moves and that the user never edits it.
+    /// </summary>
     private static string ResolveRoot()
     {
         var overridden = Environment.GetEnvironmentVariable(RootOverrideVariable);
         if (!string.IsNullOrWhiteSpace(overridden))
             return overridden;
 
-        // GetFolderPath, not %APPDATA%: the shell API is the authority, and the
-        // variable can be missing or stale in a service/elevated context.
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "XIVLauncherKR");
+        return FromUpdaterSettings() ?? DefaultRoot;
+    }
+
+    // GetFolderPath, not %APPDATA%: the shell API is the authority, and the
+    // variable can be missing or stale in a service/elevated context.
+    private static string AppData =>
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
+    private static string DefaultRoot => Path.Combine(AppData, DefaultFolder);
+
+    /// <summary>Path to the updater's settings file. It may not exist.</summary>
+    public static string UpdaterSettingsPath =>
+        Path.Combine(AppData, UpdaterSettingsDir, UpdaterSettingsName);
+
+    /// <summary>
+    /// ProfileRoot out of the updater's settings, or null when it is absent,
+    /// unreadable or unusable. Someone else's broken file must not stop our
+    /// installer, so every failure here is silent and falls through to the
+    /// default.
+    /// </summary>
+    private static string? FromUpdaterSettings()
+    {
+        try
+        {
+            return ProfileRootFrom(File.ReadAllText(UpdaterSettingsPath), AppData);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The parsing and validation, with nothing read from the machine. Split out
+    /// because the branches that matter here are the ones that never happen on a
+    /// working setup - no file, broken file, a value we must refuse - and a
+    /// method that reaches for the real %APPDATA% cannot be driven into them.
+    ///
+    /// Returns null for anything unusable; the caller falls back.
+    /// </summary>
+    internal static string? ProfileRootFrom(string json, string appData)
+    {
+        string? value;
+        try
+        {
+            using var parsed = JsonDocument.Parse(json);
+            if (parsed.RootElement.ValueKind != JsonValueKind.Object) return null;
+            if (!parsed.RootElement.TryGetProperty(ProfileRootKey, out var property)) return null;
+            if (property.ValueKind != JsonValueKind.String) return null;
+            value = property.GetString();
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        // The updater stores it literally as "%APPDATA%\XIVLauncherKR", and it
+        // expands that against the environment - so we do too, even though our
+        // own default comes from the shell API. Matching the updater is the
+        // whole point; being independently correct is not.
+        var expanded = Environment.ExpandEnvironmentVariables(value ?? string.Empty).Trim();
+        return Usable(expanded, appData) ? expanded : null;
+    }
+
+    /// <summary>
+    /// Values the updater itself rejects, so we reject them too: %APPDATA%
+    /// itself and a bare drive root. Either one would treat somebody else's
+    /// whole folder as the profile.
+    /// </summary>
+    internal static bool Usable(string candidate, string appData)
+    {
+        if (string.IsNullOrWhiteSpace(candidate)) return false;
+
+        try
+        {
+            var full = Path.GetFullPath(candidate);
+            if (Directory.GetParent(full) is null) return false;
+            return !string.Equals(
+                full.TrimEnd(Path.DirectorySeparatorChar),
+                Path.GetFullPath(appData).TrimEnd(Path.DirectorySeparatorChar),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Which of the three decided <see cref="Root"/>. Goes into the installer
+    /// log: when the plugin ends up in the wrong folder, this is the first
+    /// question, and the GUI cannot be inspected by the people who need it.
+    ///
+    /// Deliberately a path or a variable name rather than a sentence, so it
+    /// reads the same in every language.
+    /// </summary>
+    public static string RootSource()
+    {
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(RootOverrideVariable)))
+            return RootOverrideVariable;
+        return FromUpdaterSettings() is not null ? UpdaterSettingsPath : DefaultFolder;
     }
 
     public static readonly string DevPluginsRoot = Path.Combine(Root, "devPlugins");
