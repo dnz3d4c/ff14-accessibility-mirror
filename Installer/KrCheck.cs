@@ -19,6 +19,35 @@ internal static class KrCheck
     [DllImport("kernel32.dll")]
     private static extern bool AllocConsole();
 
+    /// <summary>
+    /// Runs the whole installation without the window, and says whether the
+    /// files ended up where Dalamud looks for them.
+    ///
+    /// Two reasons this exists. It is the only way to exercise the install path
+    /// automatically (tools/pack-check drives it against a throwaway profile via
+    /// FF14ACC_KR_PROFILE), and it is the only way to install without a mouse.
+    /// The GUI stays the path users take - this changes nothing about it.
+    ///
+    /// Returns a process exit code: 0 when an installed copy is on disk afterwards.
+    /// </summary>
+    public static int RunInstall(bool skipVnavmesh)
+    {
+        if (!AttachConsole(-1)) AllocConsole();
+
+        var service = new InstallerService { SkipVnavmesh = skipVnavmesh };
+        service.LogMessage += Console.WriteLine;
+        // The GUI asks this one in a MessageBox. Headless means yes - somebody
+        // who typed --install is not waiting to be asked.
+        service.AskYesNo = _ => true;
+
+        service.RunAsync().GetAwaiter().GetResult();
+
+        Console.WriteLine();
+        var installed = InstallerService.InstalledCopyPath();
+        Line("installed copy", installed ?? "(not found)", installed != null);
+        return installed != null ? 0 : 1;
+    }
+
     public static void Run(bool bootstrap)
     {
         // WinExe has no console of its own; borrow the caller's, or make one.
@@ -57,6 +86,15 @@ internal static class KrCheck
 
         var build = KrProfile.FindLocalBuild();
         Line("plugin build", build ?? "(not found)", build != null);
+
+        // Where the plugin actually is, not where it should be. A dev leftover
+        // beside the installed copy means the same plugin loads twice, and that
+        // is invisible from inside the game until the commands collide.
+        var installed = InstallerService.InstalledCopyPath();
+        Line("installed copy", installed ?? "(not found)", installed != null);
+        var devLeftover = Path.Combine(KrProfile.DevPluginsRoot, "FF14Accessibility");
+        if (Directory.Exists(devLeftover))
+            Console.WriteLine($"[!! ] {"dev leftover",-20} {devLeftover}  <- loads a second copy, remove it");
 
         Console.WriteLine();
         Console.WriteLine("base directory: " + AppContext.BaseDirectory);
