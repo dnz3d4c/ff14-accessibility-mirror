@@ -274,6 +274,7 @@ public static class Loc
             ["LanguageGermanButton"] = "Deutsch",
             ["LanguageEnglishButton"] = "English",
             ["KrCheckingProfile"] = "Pruefe das koreanische Profil ...",
+            ["KrProfileRoot"] = "Profilordner: {0}  (entschieden durch: {1})",
             ["KrProfileFound"] = "Profil vorhanden.",
             ["KrProfileCreated"] = "Fehlende Teile angelegt: {0}",
             ["KrRuntimeVariableSet"] = "DALAMUD_RUNTIME gesetzt: {0}",
@@ -459,6 +460,7 @@ public static class Loc
             ["LanguageGermanButton"] = "Deutsch",
             ["LanguageEnglishButton"] = "English",
             ["KrCheckingProfile"] = "Checking the Korean profile ...",
+            ["KrProfileRoot"] = "Profile root: {0}  (decided by: {1})",
             ["KrProfileFound"] = "Profile found.",
             ["KrProfileCreated"] = "Created the missing pieces: {0}",
             ["KrRuntimeVariableSet"] = "DALAMUD_RUNTIME set to: {0}",
@@ -484,6 +486,7 @@ public static class Loc
             ["InstallerHeader"] = "FF14 접근성 모드 설치기 (한국 서버용, 버전 {0})",
 
             ["KrCheckingProfile"] = "한국 서버 프로필을 확인한다 ...",
+            ["KrProfileRoot"] = "프로필 루트: {0}  (정한 곳: {1})",
             ["KrProfileFound"] = "프로필이 있다.",
             ["KrProfileCreated"] = "없던 것을 만들었다: {0}",
             ["KrRuntimeVariableSet"] = "DALAMUD_RUNTIME을 걸었다: {0}",
