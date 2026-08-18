@@ -19,6 +19,16 @@ internal static class Program
             return;
         }
 
+        // --install laeuft denselben Ablauf wie die GUI, nur ohne Fenster, und
+        // setzt einen Exit-Code. Damit ist der Installationsweg automatisch
+        // pruefbar (tools/pack-check) - die GUI selbst ist es nicht.
+        if (Array.IndexOf(args, "--install") >= 0)
+        {
+            Loc.Current = Loc.LoadSavedLanguage() ?? DefaultLanguage();
+            Environment.ExitCode = KrCheck.RunInstall(Array.IndexOf(args, "--skip-vnavmesh") >= 0);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
 
         // Phase 2 des Selbst-Updates: aus %TEMP% gestartet, ersetzt die
