@@ -169,7 +169,8 @@ public static partial class AccessibilityStrings
     /// Only the conflict count is actionable there: a plugin key is dead.
     /// </summary>
     public static string KeybindConflictsShort(int conflictCount) =>
-        IsGerman
+        Loc.IsKorean ? $"키 충돌 {conflictCount}개."
+        : IsGerman
             ? (conflictCount == 1 ? "1 Tastenkonflikt." : $"{conflictCount} Tastenkonflikte.")
             : (conflictCount == 1 ? "1 key conflict." : $"{conflictCount} key conflicts.");
 
@@ -312,7 +313,13 @@ public static partial class AccessibilityStrings
     private static readonly string[] CompassEn =
         { "North", "Northeast", "East", "Southeast", "South", "Southwest", "West", "Northwest" };
 
-    public static string[] CompassWords => IsGerman ? CompassDe : CompassEn;
+    // Korean does not inflect a compass word for this position, so the two Korean
+    // arrays hold the same words. They stay TWO arrays: merging them would force
+    // German and English to share one, and those two do differ.
+    private static readonly string[] CompassKo =
+        { "북", "북동", "동", "남동", "남", "남서", "서", "북서" };
+
+    public static string[] CompassWords => Loc.IsKorean ? CompassKo : IsGerman ? CompassDe : CompassEn;
 
     // Adjective/adverb compass forms for "&lt;distance&gt; meters &lt;dir&gt;"
     // spot lines (0 = North .. 7 = Northwest).
@@ -320,7 +327,9 @@ public static partial class AccessibilityStrings
         { "nördlich", "nordöstlich", "östlich", "südöstlich", "südlich", "südwestlich", "westlich", "nordwestlich" };
     private static readonly string[] CompassAdjEn =
         { "north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest" };
-    public static string[] CompassAdjectives => IsGerman ? CompassAdjDe : CompassAdjEn;
+    private static readonly string[] CompassAdjKo =
+        { "북", "북동", "동", "남동", "남", "남서", "서", "북서" };
+    public static string[] CompassAdjectives => Loc.IsKorean ? CompassAdjKo : IsGerman ? CompassAdjDe : CompassAdjEn;
 
     /// <summary>A spot list line: name, level, distance and compass bearing
     /// (shared by the fishing- and gathering-spot read-outs).</summary>
@@ -493,7 +502,8 @@ public static partial class AccessibilityStrings
     /// <summary>One FATE line: name, level, then either the completion percent or,
     /// for a not-yet-started FATE, a "starting soon" note.</summary>
     public static string FateEntry(string name, int level, byte progress, bool preparing) =>
-        IsGerman
+        Loc.IsKorean ? $"{name}, 레벨 {level}, {(preparing ? "곧 시작" : $"{progress} 퍼센트")}"
+        : IsGerman
             ? $"{name}, Stufe {level}, {(preparing ? "startet gleich" : $"{progress} Prozent")}"
             : $"{name}, level {level}, {(preparing ? "starting soon" : $"{progress} percent")}";
 
@@ -991,7 +1001,10 @@ public static partial class AccessibilityStrings
     /// <summary>The "get there via &lt;transition&gt;" clause of a cross-zone quest
     /// announcement, including the count of remaining transitions.</summary>
     public static string RouteViaHop(string hopName, string distance, string direction, int extraHops) =>
-        IsGerman
+        Loc.IsKorean
+            ? $" {hopName} 통해서, {distance}, {direction}" +
+              (extraHops > 0 ? $", 그다음 통로 {extraHops}개 더." : ".")
+        : IsGerman
             ? $" Dorthin über {hopName}, {distance}, {direction}" +
               (extraHops > 0 ? $", danach noch {extraHops} weitere Übergänge." : ".")
             : $" Get there via {hopName}, {distance}, {direction}" +
@@ -1046,7 +1059,9 @@ public static partial class AccessibilityStrings
     // ── Datenzentrums-Auswahl (TitleDCWorldMap) ──────────────────────
     public static string DCSelected(string dc, IReadOnlyCollection<string> worlds) =>
         worlds.Count > 0
-            ? (IsGerman
+            ? (Loc.IsKorean
+                ? $"{dc} 선택됨. 서버: {string.Join(", ", worlds)}. 확인 버튼을 누르면 확정된다."
+                : IsGerman
                 ? $"{dc} ausgewählt. Welten: {string.Join(", ", worlds)}. Zum Bestätigen den Ok-Knopf drücken."
                 : $"{dc} selected. Worlds: {string.Join(", ", worlds)}. Press the Ok button to confirm.")
             : (IsGerman ? $"{dc} ausgewählt." : $"{dc} selected.");
@@ -1072,7 +1087,8 @@ public static partial class AccessibilityStrings
 
     /// <summary>", N entries" plus optional ": &lt;selection&gt;", appended to a tab line.</summary>
     public static string ListEntriesSuffix(int count, string selection) =>
-        IsGerman
+        Loc.IsKorean ? $", 항목 {count}개{(selection.Length > 0 ? $": {selection}" : string.Empty)}"
+        : IsGerman
             ? $", {count} Einträge{(selection.Length > 0 ? $": {selection}" : string.Empty)}"
             : $", {count} entries{(selection.Length > 0 ? $": {selection}" : string.Empty)}";
 
@@ -1122,11 +1138,15 @@ public static partial class AccessibilityStrings
         : "Hand over item. Press Ctrl F3 for the matching items, then select and Hand Over.";
     public static string DeliveryItems(IReadOnlyList<string> items) => items.Count switch
     {
-        0 => IsGerman ? "Keine passenden Gegenstände im Beutel gefunden." : "No matching items found in your bag.",
-        1 => IsGerman
-                ? $"Ein passender Gegenstand: {items[0]}. Auswählen und dann Übergeben drücken."
-                : $"One matching item: {items[0]}. Select it, then press Hand Over.",
-        _ => IsGerman
+        0 => Pick("Keine passenden Gegenstände im Beutel gefunden.",
+                  "No matching items found in your bag.",
+                  "소지품에 맞는 아이템 없음."),
+        1 => Pick($"Ein passender Gegenstand: {items[0]}. Auswählen und dann Übergeben drücken.",
+                  $"One matching item: {items[0]}. Select it, then press Hand Over.",
+                  $"맞는 아이템 하나: {items[0]}. 고른 다음 건네주기를 누른다."),
+        _ => Loc.IsKorean
+                ? $"맞는 아이템 {items.Count}개: {string.Join(", ", items)}. 하나 고른 다음 건네주기를 누른다."
+                : IsGerman
                 ? $"{items.Count} passende Gegenstände: {string.Join(", ", items)}. Auswählen und dann Übergeben drücken."
                 : $"{items.Count} matching items: {string.Join(", ", items)}. Select one, then press Hand Over.",
     };
@@ -1148,9 +1168,11 @@ public static partial class AccessibilityStrings
     /// Spieler sieht die ganze Seite auf einen Blick; die Zahl ist das
     /// Gegenstueck dazu.</summary>
     public static string ConfigPageWithCount(string heading, int count) =>
-        IsGerman
-            ? $"{heading}, {count} {(count == 1 ? "Einstellung" : "Einstellungen")}"
-            : $"{heading}, {count} {(count == 1 ? "setting" : "settings")}";
+        Loc.IsKorean
+            ? $"{heading}, 설정 {count}개"
+            : IsGerman
+                ? $"{heading}, {count} {(count == 1 ? "Einstellung" : "Einstellungen")}"
+                : $"{heading}, {count} {(count == 1 ? "setting" : "settings")}";
 
     public static string TabPressedNoPageChange => IsGerman ? "Reiter gedrückt, aber kein Seitenwechsel erkannt." : "Tab pressed, but no page change detected.";
     public static string TabNotResponding => IsGerman ? "Reiter reagiert nicht." : "Tab not responding.";
@@ -1174,7 +1196,8 @@ public static partial class AccessibilityStrings
     // ── Zusammengesetzte Ansagen (UIReader Etappe 2) ─────────────────
     /// <summary>" item: " / " items: " count label for a gathered/read item list.</summary>
     public static string ItemsCountLabel(int count) =>
-        IsGerman ? (count == 1 ? " Gegenstand: " : " Gegenstände: ")
+        Loc.IsKorean ? " 아이템: "
+        : IsGerman ? (count == 1 ? " Gegenstand: " : " Gegenstände: ")
                  : (count == 1 ? " item: " : " items: ");
 
     /// <summary>The word "Level" / "Stufe" - used both standalone and to expand
@@ -1202,7 +1225,8 @@ public static partial class AccessibilityStrings
     /// <summary>One option while stepping through an OPENED drop-down. Names the
     /// stored choice, which a sighted player sees highlighted in the list.</summary>
     public static string DropdownOption(string option, int index, int count, bool selected) =>
-        IsGerman
+        Loc.IsKorean ? $"{option}, {count} 중 {index}{(selected ? ", 선택됨" : "")}"
+        : IsGerman
             ? $"{option}, {index} von {count}{(selected ? ", ausgewählt" : "")}"
             : $"{option}, {index} of {count}{(selected ? ", selected" : "")}";
     // ── Zur Wegrichtung drehen (Numpad5) ─────────────────────────────
@@ -1282,8 +1306,9 @@ public static partial class AccessibilityStrings
     // ── Belohnungs-Zeile (JournalResult) ─────────────────────────────
     // Currency type is only a UI image, so the mod labels amounts by position.
     public static string[] RewardCurrencyLabels =>
-        IsGerman ? new[] { "Erfahrung", "Gil" } : new[] { "EXP", "Gil" };
-    public static string MoreReward => IsGerman ? "weitere Vergütung" : "further reward";
+        Loc.IsKorean ? new[] { "경험치", "길" }
+        : IsGerman ? new[] { "Erfahrung", "Gil" } : new[] { "EXP", "Gil" };
+    public static string MoreReward => Pick("weitere Vergütung", "further reward", "추가 보상");
     /// <summary>Prefix spoken in front of the whole quest-completion reward summary.</summary>
     public static string RewardPrefix => IsGerman ? "Belohnung: " : "Reward: ";
     /// <summary>A reward item with a quantity: German "&lt;qty&gt; mal &lt;name&gt;",
@@ -1333,8 +1358,9 @@ public static partial class AccessibilityStrings
     // ── Keybind-Zeile (Config) ───────────────────────────────────────
     public static string KeyBindingLine(string label, IReadOnlyList<string> keys) =>
         keys.Count > 0
-            ? (IsGerman ? $"{label}, Taste {string.Join(", ", keys)}" : $"{label}, key {string.Join(", ", keys)}")
-            : (IsGerman ? $"{label}, keine Taste" : $"{label}, no key");
+            ? (Loc.IsKorean ? $"{label}, {string.Join(", ", keys)} 키"
+               : IsGerman ? $"{label}, Taste {string.Join(", ", keys)}" : $"{label}, key {string.Join(", ", keys)}")
+            : (Pick($"{label}, keine Taste", $"{label}, no key", $"{label}, 키 없음"));
 
     // ── Anfaenger-Arena (BeginnersMansionProblem) ────────────────────
     // "Beginner's Arena" is the EN content name; verify against an EN dump (Teil 2).
@@ -1623,7 +1649,8 @@ public static partial class AccessibilityStrings
     // Welche EIGENEN Klassen das Teil tragen koennen - die Frage vorm Verkaufen.
     // Ein- und Mehrzahl getrennt, sonst stolpert die Ansage bei einer Klasse.
     public static string ForYourClasses(string classes, int count) =>
-        IsGerman
+        Loc.IsKorean ? $", 내 클래스: {classes}"
+        : IsGerman
             ? (count == 1 ? $", für deine Klasse {classes}" : $", für deine Klassen {classes}")
             : (count == 1 ? $", for your {classes}" : $", for your classes {classes}");
     // Langform fuer den einzelnen Gegenstand, wo Platz fuer die Warnung ist.
@@ -1700,10 +1727,13 @@ public static partial class AccessibilityStrings
         IsGerman ? $"Verzögerung {seconds:0.0} Sekunden" : $"delay {seconds:0.0} seconds";
     /// <summary>One attribute bonus, e.g. "Stärke plus 4" - name from the sheet.</summary>
     public static string AttributeValue(string name, int v) =>
-        IsGerman
+        Loc.IsKorean ? $"{name} {(v < 0 ? "마이너스" : "플러스")} {Math.Abs(v)}"
+        : IsGerman
             ? $"{name} {(v < 0 ? "minus" : "plus")} {Math.Abs(v)}"
             : $"{name} {(v < 0 ? "minus" : "plus")} {Math.Abs(v)}";
-    public static string MateriaSlots(int n) => IsGerman
+    public static string MateriaSlots(int n) =>
+        Loc.IsKorean ? $"마테리아 {n}칸"
+        : IsGerman
         ? (n == 1 ? "1 Materia-Slot" : $"{n} Materia-Slots")
         : (n == 1 ? "1 materia slot" : $"{n} materia slots");
 
@@ -1714,7 +1744,8 @@ public static partial class AccessibilityStrings
     /// string; the dots are spoken out per language so the screen reader does
     /// not run the digits together.</summary>
     public static string VersionReady(string version) =>
-        IsGerman
+        Loc.IsKorean ? $"FF14 Accessibility 버전 {version.Replace(".", " 점 ")} 준비됨."
+        : IsGerman
             ? $"FF14 Accessibility Version {version.Replace(".", " Punkt ")} bereit."
             : $"FF14 Accessibility version {version.Replace(".", " point ")} ready.";
 
@@ -1794,7 +1825,42 @@ public static partial class AccessibilityStrings
     /// <summary>The full "/acc help" readout: every plugin hotkey and command.
     /// Keys are the current defaults (Page keys, Numpad 3, Plus - kept in sync
     /// with <see cref="Configuration"/>).</summary>
-    public static string HelpFull => IsGerman
+    public static string HelpFull => Loc.IsKorean
+        ? "단축키: " +
+          "페이지 다운, 다음 사물을 말하고 대상으로 지정. " +
+          "페이지 업, 이전 사물. " +
+          "컨트롤 페이지 다운, 다음 분류. " +
+          "컨트롤 페이지 업, 이전 분류. " +
+          "컨트롤 숫자패드 3, 길안내 켜기 또는 끄기. 길 정보를 따라 장애물을 돌아간다. " +
+          "숫자패드 3, 목적지까지 자동으로 이동. " +
+          "플러스, 지정한 대상 따라가기 켜기 또는 끄기. " +
+          "컨트롤 숫자패드 5, 걷지 않고 목적지까지의 경로만 말하기. " +
+          "F, 목적지 쪽으로 돌기. W, 앞으로 이동. " +
+          "컨트롤 F1, 이 도움말. " +
+          "컨트롤 F2, 활성 창. " +
+          "컨트롤 F10, 현재 메뉴 읽기. " +
+          "컨트롤 F11, 말하기 멈춤. " +
+          "컨트롤 딜리트, HP와 MP 말하기. " +
+          "컨트롤 F9, 고른 단축바 읽기. " +
+          "컨트롤 F6, 착용한 장비 읽기. " +
+          "컨트롤 F7, 추천 장비 착용. " +
+          "컨트롤 F8, 캐릭터 생성에서 무작위 외모. " +
+          "컨트롤 숫자패드 0, 기술 메뉴 열기. 숫자패드 8과 2로 넘기고, 숫자패드 0으로 고르고, 숫자패드 마침표로 돌아간다. " +
+          "컨트롤 시프트 F6, 발자취 기록 켜기 또는 끄기. 길 정보가 모르는 구간을 한 번 직접 걸어간다. " +
+          "명령어: " +
+          "/acc nav, 목적지 방향. " +
+          "/acc set, 지금 지정한 대상을 추적. " +
+          "/acc clear, 대상 해제. " +
+          "/acc near, 근처 사물. " +
+          "/acc status, HP와 MP 말하기. " +
+          "/acc ui, 현재 메뉴 읽기. " +
+          "/acc win, 활성 창 말하기. " +
+          "/acc keys, 게임 단축키를 바탕 화면에 저장. " +
+          "/acc cooldowns, 기술 준비됨 안내 켜기 또는 끄기. " +
+          "/acc trails, 이 지역에 기록된 발자취 목록. " +
+          "/acc trail del과 번호, 발자취 하나 지우기. " +
+          "/acc stop, 말하기 멈춤."
+        : IsGerman
         ? "Tasten: " +
           "Bild ab, nächstes Objekt ansagen und anvisieren. " +
           "Bild auf, vorheriges Objekt. " +
@@ -2054,16 +2120,21 @@ public static partial class AccessibilityStrings
     /// <summary>Said out loud, not just logged: a trail that only works downhill
     /// is a promise the plugin cannot keep in reverse, and being stranded on the
     /// far side is exactly what happened in-game on 2026-08-09.</summary>
-    public static string TrailOneWayOnly(float drop) => IsGerman
-        ? $"Achtung, diese Spur ueberwindet {MetersRemaining(drop)} Hoehe und gilt deshalb nur in Laufrichtung. Fuer den Rueckweg zeichne bitte eine eigene Spur auf."
-        : $"Careful: this trail covers {MetersRemaining(drop)} of height, so it only counts in the direction you walked it. Record a separate trail for the way back.";
-    public static string TrailDefaultName(int number) => IsGerman
-        ? $"Verbindung {number}" : $"Crossing {number}";
-    public static string TrailNoneHere => IsGerman
-        ? "Keine Spuren in diesem Gebiet." : "No trails in this area.";
-    public static string TrailCount(int count) => IsGerman
-        ? $"{count} Spuren in diesem Gebiet." : $"{count} trails in this area.";
-    public static string TrailListEntry(int number, string name, float length, bool bothWays) => IsGerman
+    public static string TrailOneWayOnly(float drop) => Pick($"Achtung, diese Spur ueberwindet {MetersRemaining(drop)} Hoehe und gilt deshalb nur in Laufrichtung. Fuer den Rueckweg zeichne bitte eine eigene Spur auf.",
+                                                             $"Careful: this trail covers {MetersRemaining(drop)} of height, so it only counts in the direction you walked it. Record a separate trail for the way back.",
+                                                             $"주의: 이 발자취는 높이 {MetersRemaining(drop)}를 지나므로 걸어간 방향으로만 쓸 수 있다. 돌아오는 길은 따로 기록해라.");
+    public static string TrailDefaultName(int number) => Pick($"Verbindung {number}",
+                                                              $"Crossing {number}",
+                                                              $"연결 {number}");
+    public static string TrailNoneHere => Pick("Keine Spuren in diesem Gebiet.",
+                                               "No trails in this area.",
+                                               "이 지역에 발자취 없음.");
+    public static string TrailCount(int count) => Pick($"{count} Spuren in diesem Gebiet.",
+                                                       $"{count} trails in this area.",
+                                                       $"이 지역에 발자취 {count}개.");
+    public static string TrailListEntry(int number, string name, float length, bool bothWays) =>
+        Loc.IsKorean ? $"{number}: {name}, {MetersRemaining(length)}, {(bothWays ? "양방향" : "걸어간 방향만")}."
+        : IsGerman
         ? $"{number}: {name}, {MetersRemaining(length)}, {(bothWays ? "in beide Richtungen" : "nur in Laufrichtung")}."
         : $"{number}: {name}, {MetersRemaining(length)}, {(bothWays ? "both ways" : "one way only")}.";
     public static string TrailUnknownNumber => IsGerman
@@ -2171,13 +2242,15 @@ public static partial class AccessibilityStrings
     /// <summary>Target-bar summary: how many slots are filled, plus a warning
     /// when the bar has no keys bound.</summary>
     public static string TargetBarSummary(int bar, int filled, int total, bool anyKey) =>
-        IsGerman
+        Loc.IsKorean ? $"{bar}번 대상 단축바, {total}칸 중 {filled}칸 채움{(anyKey ? "" : ", 키가 배정되지 않음")}."
+        : IsGerman
             ? $"Ziel-Leiste {bar}, {filled} von {total} belegt{(anyKey ? "" : ", keine Tasten zugewiesen")}."
             : $"Target bar {bar}, {filled} of {total} filled{(anyKey ? "" : ", no keys assigned")}.";
     /// <summary>One browsed skill: name, level, where it currently sits (optional)
     /// and its position in the list.</summary>
     public static string SkillBrowseEntry(string name, int level, string? location, int index, int count) =>
-        IsGerman
+        Loc.IsKorean ? $"{name}, 레벨 {level}{(location != null ? $", {location}에 있음" : "")}, {count} 중 {index}"
+        : IsGerman
             ? $"{name}, Stufe {level}{(location != null ? $", liegt auf {location}" : "")}, {index} von {count}"
             : $"{name}, level {level}{(location != null ? $", on {location}" : "")}, {index} of {count}";
 
@@ -2185,7 +2258,8 @@ public static partial class AccessibilityStrings
     /// sits (optional) and its position in the list. The count is spoken because
     /// a stack of one is a different decision than a stack of twenty.</summary>
     public static string ItemBrowseEntry(string name, int quantity, bool isHq, string? location, int index, int count) =>
-        IsGerman
+        Loc.IsKorean ? $"{name}{(isHq ? HighQuality : "")}, {quantity}개{(location != null ? $", {location}에 있음" : "")}, {count} 중 {index}"
+        : IsGerman
             ? $"{name}{(isHq ? HighQuality : "")}, {quantity} Stück{(location != null ? $", liegt auf {location}" : "")}, {index} von {count}"
             : $"{name}{(isHq ? HighQuality : "")}, {quantity}{(location != null ? $", on {location}" : "")}, {index} of {count}";
 
@@ -2219,7 +2293,8 @@ public static partial class AccessibilityStrings
     /// and mounts. Same shape as the other browse entries so the menu sounds
     /// consistent no matter which list is open.</summary>
     public static string PlainBrowseEntry(string name, string? location, int index, int count) =>
-        IsGerman
+        Loc.IsKorean ? $"{name}{(location != null ? $", {location}에 있음" : "")}, {count} 중 {index}"
+        : IsGerman
             ? $"{name}{(location != null ? $", liegt auf {location}" : "")}, {index} von {count}"
             : $"{name}{(location != null ? $", on {location}" : "")}, {index} of {count}";
 
@@ -2233,7 +2308,8 @@ public static partial class AccessibilityStrings
     /// and where it already sits. The cast time matters in a fight - three
     /// seconds of standing still is a decision.</summary>
     public static string QuestItemBrowseEntry(string name, int quantity, byte castTime, string? location, int index, int count) =>
-        IsGerman
+        Loc.IsKorean ? $"{name}, {quantity}개{(castTime > 0 ? $", 시전 시간 {castTime}초" : "")}{(location != null ? $", {location}에 있음" : "")}, {count} 중 {index}"
+        : IsGerman
             ? $"{name}, {quantity} Stück{(castTime > 0 ? $", Wirkzeit {castTime} Sekunden" : "")}{(location != null ? $", liegt auf {location}" : "")}, {index} von {count}"
             : $"{name}, {quantity}{(castTime > 0 ? $", cast time {castTime} seconds" : "")}{(location != null ? $", on {location}" : "")}, {index} of {count}";
 
@@ -2289,7 +2365,11 @@ public static partial class AccessibilityStrings
             <= -1f => IsGerman ? $", {-heightDiff:F0} Meter unter dir" : $", {-heightDiff:F0} meters below you",
             _ => string.Empty,
         };
-        return IsGerman
+        return Loc.IsKorean
+            ? $"{target}까지 이어진 길이 없음. 가장 가까운 지점까지 간다. " +
+              $"{compass} 방향 {walkDistance:F0}미터. 거기서 목적지까지 " +
+              $"{gapDistance:F0}미터 남음{hoehe}."
+            : IsGerman
             ? $"Kein durchgehender Weg zu {target}. Ich laufe zum nächstmöglichen Punkt, " +
               $"{walkDistance:F0} Meter nach {compass}. Von dort ist das Ziel noch " +
               $"{gapDistance:F0} Meter entfernt{hoehe}."
@@ -2421,7 +2501,8 @@ public static partial class AccessibilityStrings
         IsGerman ? "Keine Emotes verfügbar." : "No emotes available.";
     /// <summary>One browsed emote: name, chat command (optional), list position.</summary>
     public static string EmoteBrowseEntry(string name, string command, int index, int count) =>
-        IsGerman
+        Loc.IsKorean ? $"{name}{(command.Length > 0 ? $", 명령어 {command}" : "")}, {count} 중 {index}"
+        : IsGerman
             ? $"{name}{(command.Length > 0 ? $", Befehl {command}" : "")}, {index} von {count}"
             : $"{name}{(command.Length > 0 ? $", command {command}" : "")}, {index} of {count}";
 
@@ -2500,7 +2581,8 @@ public static partial class AccessibilityStrings
     // ════════════════════════════════════════════════════════════════
     /// <summary>Announced the moment a roll opens.</summary>
     public static string LootRollStarted(string name, int count, string options) =>
-        IsGerman
+        Loc.IsKorean ? $"입찰: {name}{(count > 1 ? $" {count}개" : "")}. {options}"
+        : IsGerman
             ? $"Verlosung: {name}{(count > 1 ? $" mal {count}" : "")}. {options}"
             : $"Loot roll: {name}{(count > 1 ? $" times {count}" : "")}. {options}";
 
@@ -2524,7 +2606,8 @@ public static partial class AccessibilityStrings
 
     /// <summary>One entry of the on-demand readout.</summary>
     public static string LootRollEntry(string name, int count, string options, string ownRoll) =>
-        IsGerman
+        Loc.IsKorean ? $"{name}{(count > 1 ? $" {count}개" : "")}, {options}{(ownRoll.Length > 0 ? $", {ownRoll}" : "")}"
+        : IsGerman
             ? $"{name}{(count > 1 ? $" mal {count}" : "")}, {options}{(ownRoll.Length > 0 ? $", {ownRoll}" : "")}"
             : $"{name}{(count > 1 ? $" times {count}" : "")}, {options}{(ownRoll.Length > 0 ? $", {ownRoll}" : "")}";
 
@@ -2535,7 +2618,12 @@ public static partial class AccessibilityStrings
     /// for everything that is not equipment.
     /// </summary>
     public static string LootRollRow(string name, int count, string gear, string options, string remaining) =>
-        IsGerman
+        Loc.IsKorean
+            ? $"{name}{(count > 1 ? $" {count}개" : "")}" +
+              $"{(gear.Length      > 0 ? $", {gear}"      : "")}" +
+              $"{(options.Length  > 0 ? $", {options}"  : "")}" +
+              $"{(remaining.Length > 0 ? $", {remaining}" : "")}"
+        : IsGerman
             ? $"{name}{(count > 1 ? $" mal {count}" : "")}" +
               $"{(gear.Length      > 0 ? $", {gear}"      : "")}" +
               $"{(options.Length  > 0 ? $", {options}"  : "")}" +
@@ -2639,8 +2727,9 @@ public static partial class AccessibilityStrings
         IsGerman ? $"{category}, leer" : $"{category}, empty";
     public static string CategorySummary(string category, int count) =>
         count == 0
-            ? (IsGerman ? $"{category}, leer" : $"{category}, empty")
-            : (IsGerman ? $"{category}, {count} {(count == 1 ? "Nachricht" : "Nachrichten")}"
+            ? (Pick($"{category}, leer", $"{category}, empty", $"{category}, 비어 있음"))
+            : (Loc.IsKorean ? $"{category}, 메시지 {count}개"
+               : IsGerman ? $"{category}, {count} {(count == 1 ? "Nachricht" : "Nachrichten")}"
                         : $"{category}, {count} {(count == 1 ? "message" : "messages")}");
     public static string HistoryStart =>
         IsGerman ? "Anfang des Verlaufs." : "Start of history.";
@@ -2955,7 +3044,8 @@ public static partial class AccessibilityStrings
     /// Typ-4-Menue gehoert, also wird nichts zugeschrieben, was sich nicht belegen
     /// laesst.</summary>
     public static string CharaMakeFeatureBit(string label, int number, bool on) =>
-        IsGerman ? $"{label} {number}, {(on ? "an" : "aus")}"
+        Loc.IsKorean ? $"{label} {number}, {(on ? "켜짐" : "꺼짐")}"
+        : IsGerman ? $"{label} {number}, {(on ? "an" : "aus")}"
                  : $"{label} {number}, {(on ? "on" : "off")}";
 
     /// <summary>Derselbe Schalter, aber mit NAMEN statt Nummer. User: *"facial
@@ -2965,20 +3055,23 @@ public static partial class AccessibilityStrings
     /// Gesichtsmerkmale, Eintrag "1 von 5", kippte Bit 0 - also Reihe i = Bit
     /// i-1.</summary>
     public static string CharaMakeFeatureNamed(string label, int number, string what, bool on) =>
-        IsGerman ? $"{label} {number}, {what}, {(on ? "an" : "aus")}"
+        Loc.IsKorean ? $"{label} {number}, {what}, {(on ? "켜짐" : "꺼짐")}"
+        : IsGerman ? $"{label} {number}, {what}, {(on ? "an" : "aus")}"
                  : $"{label} {number}, {what}, {(on ? "on" : "off")}";
 
     /// <summary>Eine Typ-4-Reihe beim MARKIEREN: was sie ist und ob sie gerade an
     /// ist. Die Position spricht der Fokus-Leser bereits, hier stehen nur die beiden
     /// Teile, die er nicht wissen kann.</summary>
     public static string CharaMakeFeatureRow(string what, bool on) =>
-        IsGerman ? $"{what}, {(on ? "an" : "aus")}" : $"{what}, {(on ? "on" : "off")}";
+        Loc.IsKorean ? $"{what}, {(on ? "켜짐" : "꺼짐")}"
+        : IsGerman ? $"{what}, {(on ? "an" : "aus")}" : $"{what}, {(on ? "on" : "off")}";
 
     /// <summary>Nur der Zustand, fuer ein Merkmal ohne geschriebene Beschreibung -
     /// "aus" ist auch dann die Ansage wert, wenn sich die Sache nicht benennen
     /// laesst.</summary>
     public static string CharaMakeFeatureState(bool on) =>
-        IsGerman ? (on ? "an" : "aus") : (on ? "on" : "off");
+        Loc.IsKorean ? (on ? "켜짐" : "꺼짐")
+        : IsGerman ? (on ? "an" : "aus") : (on ? "on" : "off");
 
     public static string CharaMakeFeatureLabel => IsGerman ? "Merkmal" : "Feature";
 
