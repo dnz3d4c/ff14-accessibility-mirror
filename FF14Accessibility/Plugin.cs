@@ -651,7 +651,12 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.SavePluginConfig(_config);
 
         // Name the resolved language; "auto" also reports which one Windows picked.
-        var languageName = Loc.IsGerman ? AccessibilityStrings.LanguageGerman : AccessibilityStrings.LanguageEnglish;
+        var languageName = Loc.Current switch
+        {
+            LanguageMode.German => AccessibilityStrings.LanguageGerman,
+            LanguageMode.Korean => AccessibilityStrings.LanguageKorean,
+            _ => AccessibilityStrings.LanguageEnglish,
+        };
         _tolk.SpeakInterrupt(mode.Value == LanguageMode.Auto
             ? AccessibilityStrings.LanguageAuto(languageName)
             : AccessibilityStrings.LanguageSet(languageName));
