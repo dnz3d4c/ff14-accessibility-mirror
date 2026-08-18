@@ -9,11 +9,17 @@ public sealed class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 2;
 
-    // Sprache aller Mod-Ansagen. Auto = folgt der Windows-Sprache (deutsches
-    // Windows -> Deutsch, sonst Englisch). Umschaltbar mit "/acc lang de|en|auto".
+    // Sprache aller Mod-Ansagen. Umschaltbar mit "/acc lang de|en|ko|auto".
     // Spielinhalte (Item-/NPC-Namen, Questtexte) bleiben davon unberuehrt - die
     // kommen bereits in der Spielsprache vom Spiel. Siehe Loc / AccessibilityStrings.
-    public LanguageMode Language = LanguageMode.Auto;
+    //
+    // Korean build: fixed to Korean instead of Auto. Auto follows the Windows UI
+    // language, and a Korean player on an English Windows would get English
+    // announcements on a Korean client - the one combination where the default
+    // is wrong for everybody it can happen to. This build is only distributed
+    // for the Korean client, so the language is known here in a way it is not
+    // upstream. "/acc lang auto" restores the upstream behaviour.
+    public LanguageMode Language = LanguageMode.Korean;
 
     // Tastaturbelegung. Standard ab V4.21 kollisionsfrei laut Live-Keybind-Dump
     // (2026-07-10): N ist der einzige freie Buchstabe, Strg+F1..F12 sind frei.
