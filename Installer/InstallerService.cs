@@ -3,6 +3,8 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Newtonsoft.Json.Linq;
 
@@ -13,11 +15,21 @@ namespace FF14AccessibilityInstaller;
 /// vnavmesh pathfinding plugin it uses for auto-walk). Extracted from the
 /// original console version, now driven from a WinForms GUI.
 ///
-/// Why the DevPlugin route: Dalamud's own plugin installer is an ImGui overlay
+/// Why an installer at all: Dalamud's own plugin installer is an ImGui overlay
 /// that screen readers cannot read, so a blind user cannot use it. This tool
-/// instead copies the plugin DLLs into Dalamud's devPlugins folder and enables
-/// them directly in dalamudConfig.json, so Dalamud auto-loads them on the next
-/// game start - no ImGui click required.
+/// puts the files where Dalamud looks for them and writes the settings Dalamud
+/// needs, so it auto-loads them on the next game start - no ImGui click required.
+///
+/// Two routes, and they are not the same:
+///
+///   FF14Accessibility -> installedPlugins\FF14Accessibility\&lt;version&gt;\
+///                        i.e. the shape Dalamud gives a released plugin. It is
+///                        then a normal plugin, not a "dev plugin".
+///   vnavmesh          -> devPlugins\vnavmesh\
+///                        someone else's plugin. Putting it in installedPlugins
+///                        would mean registering their repository in the user's
+///                        Dalamud settings, and this project does not write into
+///                        other people's configuration (status.md 4-3).
 ///
 /// All status text goes through <see cref="LogMessage"/>, which the GUI writes
 /// into a focusable, read-only, multi-line log textbox (screen-reader friendly).
@@ -44,7 +56,19 @@ public sealed class InstallerService
     // See KrProfile for why each piece matters.
     private static readonly string XivLauncherRoot = KrProfile.Root;
     private static readonly string DevPluginsRoot = KrProfile.DevPluginsRoot;
+    private static readonly string InstalledPluginsRoot = KrProfile.InstalledPluginsRoot;
     private static readonly string DalamudConfigPath = KrProfile.ConfigPath;
+
+    /// <summary>
+    /// What goes into the installed manifest's InstalledFromUrl. Dalamud's own
+    /// constant for "came from the official repository"
+    /// (SpecialPluginSource.MainRepo). It decides one thing that matters here:
+    /// LocalPlugin.IsOrphaned is true when no configured repository matches the
+    /// manifest, and an orphaned plugin is NOT loaded. With this value the
+    /// manifest is not third-party, so the main repository matches it and the
+    /// plugin loads. Verified against Dalamud's LocalPlugin.GetSourceRepository.
+    /// </summary>
+    private const string OfficialSource = "OFFICIAL";
 
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromMinutes(10) };
 
@@ -59,6 +83,26 @@ public sealed class InstallerService
     /// <summary>Wird ausgelöst, wenn ein Selbst-Update läuft und sich dieser
     /// Prozess gleich beenden muss. Die GUI schließt daraufhin das Fenster.</summary>
     public event Action? RestartRequested;
+
+    /// <summary>
+    /// Leaves the vnavmesh step out entirely, network call included. For the
+    /// automated check of the install path: it runs against a throwaway profile
+    /// root and must not depend on puni.sh being reachable, nor download 30 MB
+    /// on every test run.
+    /// </summary>
+    public bool SkipVnavmesh { get; set; }
+
+    /// <summary>
+    /// The version folder of the installed copy, or null if there is none.
+    /// Exists so --check and --install can report the result from outside the
+    /// GUI: "the installer said it worked" and "the files are where Dalamud
+    /// looks" are different claims.
+    /// </summary>
+    public static string? InstalledCopyPath()
+    {
+        var found = FindInstalledManifest(Path.Combine(InstalledPluginsRoot, AccessibilityInternalName));
+        return found == null ? null : Path.GetDirectoryName(found.ManifestPath);
+    }
 
     public InstallerService()
     {
@@ -94,7 +138,7 @@ public sealed class InstallerService
 
             var accResult = await UpdateAccessibilityPluginAsync(ownVersion);
             Info(string.Empty);
-            var vnavResult = await UpdateVnavmeshAsync();
+            var vnavResult = SkipVnavmesh ? Loc.Get("SkippedShort") : await UpdateVnavmeshAsync();
             Info(string.Empty);
             var patchResult = PatchDalamudConfig();
 
@@ -164,6 +208,19 @@ public sealed class InstallerService
     /// gegen FFXIVClientStructs 7.55 gebunden, das koreanische Dalamud liefert
     /// 7.51. Es wuerde laden und beim ersten Gearset-Aufruf werfen. Was hier
     /// installiert wird, muss also aus diesem Checkout kommen.
+    ///
+    /// The layout is Dalamud's own, not ours (PluginManager.LoadAllPlugins):
+    ///
+    ///   installedPlugins\FF14Accessibility\&lt;version&gt;\FF14Accessibility.dll
+    ///                                                 \FF14Accessibility.json
+    ///
+    /// Three things about it are load-or-not decisions, not cosmetics:
+    ///
+    ///   - the folder name MUST parse as a version. CleanupPlugins deletes every
+    ///     version folder whose name does not, so an unreadable manifest has to
+    ///     stop the install rather than fall back to a placeholder string.
+    ///   - the DLL name MUST equal the plugin folder name.
+    ///   - the manifest needs InstalledFromUrl (see <see cref="OfficialSource"/>).
     /// </summary>
     private Task<string> UpdateAccessibilityPluginAsync(string ownVersion)
     {
@@ -177,10 +234,9 @@ public sealed class InstallerService
             return Task.FromResult(Loc.Get("KrErrorNoLocalBuild"));
         }
 
-        var targetDir = Path.Combine(DevPluginsRoot, AccessibilityInternalName);
-        var manifestPath = Path.Combine(targetDir, AccessibilityInternalName + ".json");
-        var localVersion = ReadLocalManifestVersion(manifestPath);
-        var wasInstalled = localVersion != null;
+        var pluginRoot = Path.Combine(InstalledPluginsRoot, AccessibilityInternalName);
+        var previous = FindInstalledManifest(pluginRoot);
+        var wasInstalled = previous != null;
 
         string extractDir = Path.Combine(Path.GetTempPath(), "FF14AccExtract_" + Guid.NewGuid());
         try
@@ -190,11 +246,25 @@ public sealed class InstallerService
             // Version aus dem frisch entpackten Manifest, nicht aus dem Dateinamen -
             // der Packager schreibt sie dort hinein und nur die stimmt.
             var builtVersion =
-                ReadLocalManifestVersion(Path.Combine(extractDir, AccessibilityInternalName + ".json"))
-                ?? Loc.Get("UnknownVersion");
+                ReadLocalManifestVersion(Path.Combine(extractDir, AccessibilityInternalName + ".json"));
+            if (builtVersion == null || !Version.TryParse(builtVersion, out _))
+            {
+                Error(Loc.Get("KrBuildVersionUnreadable", builtVersion ?? Loc.Get("UnknownVersion")));
+                return Task.FromResult(Loc.Get("ErrorGeneric"));
+            }
 
             Info(Loc.Get("KrUsingLocalBuild", builtVersion, zipPath));
-            DeployPluginFiles(extractDir, targetDir);
+
+            var versionDir = Path.Combine(pluginRoot, builtVersion);
+            // Old version folders are build output, and Dalamud loads the highest
+            // version it finds - leaving one behind means a downgrade survives.
+            RemoveOtherVersions(pluginRoot, versionDir);
+            DeployPluginFiles(extractDir, versionDir);
+            // Carry the identity across updates. The profile entry in
+            // dalamudConfig.json is keyed by this GUID; a fresh one on every
+            // update would leave a dead entry behind each time.
+            WriteInstalledManifest(versionDir, previous?.WorkingPluginId);
+            Info(Loc.Get("KrInstalledAt", versionDir));
 
             Info(wasInstalled
                 ? Loc.Get("AccessibilityUpdated", builtVersion)
@@ -218,6 +288,101 @@ public sealed class InstallerService
         {
             TryDeleteDirectory(extractDir);
         }
+    }
+
+    /// <summary>What an already installed copy tells us: its version folder and
+    /// the identity Dalamud gave it.</summary>
+    private sealed record InstalledCopy(string ManifestPath, string Version, Guid WorkingPluginId);
+
+    /// <summary>
+    /// Finds the installed copy under installedPlugins\&lt;name&gt;, if there is one.
+    /// Takes the highest version, which is the one Dalamud would load.
+    /// </summary>
+    private static InstalledCopy? FindInstalledManifest(string pluginRoot)
+    {
+        if (!Directory.Exists(pluginRoot)) return null;
+
+        InstalledCopy? best = null;
+        Version? bestVersion = null;
+
+        foreach (var versionDir in Directory.GetDirectories(pluginRoot))
+        {
+            var manifestPath = Path.Combine(versionDir, AccessibilityInternalName + ".json");
+            var version = ReadLocalManifestVersion(manifestPath);
+            if (version == null || !Version.TryParse(version, out var parsed)) continue;
+            if (bestVersion != null && parsed <= bestVersion) continue;
+
+            bestVersion = parsed;
+            best = new InstalledCopy(manifestPath, version, ReadWorkingPluginId(manifestPath));
+        }
+
+        return best;
+    }
+
+    private static Guid ReadWorkingPluginId(string manifestPath)
+    {
+        try
+        {
+            var node = JsonNode.Parse(File.ReadAllText(manifestPath));
+            var raw = node?["WorkingPluginId"]?.GetValue<string>();
+            return Guid.TryParse(raw, out var id) ? id : Guid.Empty;
+        }
+        catch (Exception)
+        {
+            return Guid.Empty;
+        }
+    }
+
+    /// <summary>Drops every version folder except the one just written.</summary>
+    private void RemoveOtherVersions(string pluginRoot, string keep)
+    {
+        if (!Directory.Exists(pluginRoot)) return;
+
+        foreach (var dir in Directory.GetDirectories(pluginRoot))
+        {
+            if (string.Equals(dir, keep, StringComparison.OrdinalIgnoreCase)) continue;
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+                Info(Loc.Get("KrOldVersionRemoved", Path.GetFileName(dir)));
+            }
+            catch (Exception ex)
+            {
+                // Dalamud cleans these up itself on the next boot, so a locked
+                // folder is not worth failing the install over.
+                Warn(Loc.Get("KrOldVersionKept", Path.GetFileName(dir), ex.Message));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Adds the fields a manifest only has once it is installed. The packager
+    /// writes the repository half (name, version, API level); these four are the
+    /// local half, and Dalamud writes them itself when it installs a plugin.
+    ///
+    /// <paramref name="carriedId"/> is the identity of the copy being replaced.
+    /// Empty (or absent) is fine: Dalamud then assigns one on first load and
+    /// saves it back into this file.
+    /// </summary>
+    private static void WriteInstalledManifest(string versionDir, Guid? carriedId)
+    {
+        var manifestPath = Path.Combine(versionDir, AccessibilityInternalName + ".json");
+        var manifest = JsonNode.Parse(File.ReadAllText(manifestPath))!.AsObject();
+
+        manifest["InstalledFromUrl"] = OfficialSource;
+        manifest["Disabled"] = false;
+        manifest["Testing"] = false;
+        manifest["ScheduledForDeletion"] = false;
+        if (carriedId is { } id && id != Guid.Empty)
+            manifest["WorkingPluginId"] = id.ToString();
+
+        File.WriteAllText(manifestPath, manifest.ToJsonString(new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            // Otherwise every non-ASCII letter in the description turns into
+            // \uXXXX. Valid either way, but this file is meant to be readable.
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        }), new UTF8Encoding(false));
     }
 
     private static void TryDeleteDirectory(string path)
@@ -350,10 +515,14 @@ public sealed class InstallerService
     // ── dalamudConfig.json ─────────────────────────────────────────────────
 
     /// <summary>
-    /// Registers the plugin DLLs as DevPlugin load locations and seeds everything
-    /// Dalamud needs to load them on the next boot without any UI interaction:
-    /// DevMode=true, a DevPluginSettings entry per DLL (StartOnBoot + WorkingPluginId)
-    /// and a matching enabled DefaultProfile entry (see <see cref="EnableDevPlugin"/>).
+    /// Seeds everything Dalamud needs to load both plugins on the next boot
+    /// without any UI interaction. The two routes need different things:
+    ///
+    ///   FF14Accessibility (installed): an enabled DefaultProfile entry carrying
+    ///     the same GUID as the manifest (see <see cref="EnableInstalledPlugin"/>).
+    ///   vnavmesh (dev): DevMode=true, a load location, and a DevPluginSettings
+    ///     entry with StartOnBoot (see <see cref="EnableDevPlugin"/>).
+    ///
     /// Conservative on purpose: makes a backup and writes BOM-free (Dalamud's
     /// ReliableFileStorage reads raw bytes; a UTF-8 BOM makes it silently fall
     /// back to an old SQLite copy - documented project trap).
@@ -404,26 +573,34 @@ public sealed class InstallerService
             return Loc.Get("ConfigUnexpectedStructureReturn");
         }
 
-        var accDll = Path.Combine(DevPluginsRoot, AccessibilityInternalName, AccessibilityInternalName + ".dll");
+        var accDevDll = Path.Combine(DevPluginsRoot, AccessibilityInternalName, AccessibilityInternalName + ".dll");
         var vnavDll = Path.Combine(DevPluginsRoot, VnavmeshInternalName, VnavmeshInternalName + ".dll");
         var hasVnav = File.Exists(vnavDll);
+        var installed = FindInstalledManifest(Path.Combine(InstalledPluginsRoot, AccessibilityInternalName));
 
         try
         {
             var backup = DalamudConfigPath + ".bak-installer";
             File.Copy(DalamudConfigPath, backup, overwrite: true);
 
-            // Without DevMode Dalamud never scans DevPluginLoadLocations at all
-            // (PluginManager boot load is gated on configuration.DevMode).
-            config["DevMode"] = true;
-
-            var hasAcc = File.Exists(accDll);
-            if (hasAcc) AddDevPluginLocation(loadLocations, accDll);
-            if (hasVnav) AddDevPluginLocation(loadLocations, vnavDll);
+            // Only for vnavmesh, which keeps the dev route: without DevMode
+            // Dalamud never scans DevPluginLoadLocations at all (PluginManager
+            // boot load is gated on configuration.DevMode). Our own plugin does
+            // not need it any more, so an install without vnavmesh leaves the
+            // setting alone instead of turning developer mode on for nothing.
+            if (hasVnav)
+            {
+                config["DevMode"] = true;
+                AddDevPluginLocation(loadLocations, vnavDll);
+            }
 
             var enabled = true;
-            if (hasAcc) enabled &= EnableDevPlugin(config, AccessibilityInternalName, accDll);
             if (hasVnav) enabled &= EnableDevPlugin(config, VnavmeshInternalName, vnavDll);
+            if (installed != null) enabled &= EnableInstalledPlugin(config, AccessibilityInternalName, installed);
+
+            // Whatever the dev route left behind would load a SECOND copy of the
+            // same plugin beside the installed one - same commands, same hotkeys.
+            RemoveDevInstall(config, loadLocations, accDevDll);
 
             WriteAllTextNoBom(DalamudConfigPath, config.ToString());
             Info(Loc.Get("ConfigUpdated", Path.GetFileName(backup)));
@@ -532,6 +709,120 @@ public sealed class InstallerService
             });
         }
         return true;
+    }
+
+    /// <summary>
+    /// Same job as <see cref="EnableDevPlugin"/> for a plugin that sits in
+    /// installedPlugins. Simpler, because an installed plugin needs no DevMode
+    /// and no DevPluginSettings - the only thing standing between it and loading
+    /// is the profile: PluginManager loads it when a profile wants its
+    /// WorkingPluginId, and the manifest is where that GUID lives.
+    ///
+    /// Dalamud would assign a GUID itself and add a default-enabled entry, but
+    /// only after it has loaded once. Seeding both sides here means the very
+    /// first boot after the install already has the plugin on, and it means the
+    /// state can be checked from outside the game.
+    ///
+    /// Returns false if the profile structure is not what we expect.
+    /// </summary>
+    private bool EnableInstalledPlugin(JObject config, string internalName, InstalledCopy installed)
+    {
+        if (config["DefaultProfile"]?["Plugins"]?["$values"] is not JArray profilePlugins)
+            return false;
+
+        var workingId = installed.WorkingPluginId;
+        if (workingId == Guid.Empty)
+        {
+            workingId = Guid.NewGuid();
+            // The manifest is the authority Dalamud reads, so it has to carry the
+            // same GUID as the profile entry below.
+            var manifest = JsonNode.Parse(File.ReadAllText(installed.ManifestPath))!.AsObject();
+            manifest["WorkingPluginId"] = workingId.ToString();
+            File.WriteAllText(installed.ManifestPath, manifest.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            }), new UTF8Encoding(false));
+        }
+
+        var existing = profilePlugins.FirstOrDefault(p =>
+            string.Equals((string?)p["InternalName"], internalName, StringComparison.Ordinal));
+        if (existing != null)
+        {
+            existing["IsEnabled"] = true;
+            // Overwrites whatever the dev install left here - one entry per
+            // plugin, pointing at the copy that is actually on disk.
+            existing["WorkingPluginId"] = workingId.ToString();
+        }
+        else
+        {
+            profilePlugins.Add(new JObject
+            {
+                ["$type"] = "Dalamud.Plugin.Internal.Profiles.ProfileModelV1+ProfileModelV1Plugin, Dalamud",
+                ["InternalName"] = internalName,
+                ["WorkingPluginId"] = workingId.ToString(),
+                ["IsEnabled"] = true,
+            });
+        }
+
+        Info(Loc.Get("KrProfileEntrySeeded", internalName, workingId.ToString()));
+        return true;
+    }
+
+    /// <summary>
+    /// Removes every trace of the dev-route install of our own plugin: the load
+    /// location, the DevPluginSettings entry, and the folder itself.
+    ///
+    /// This is not tidiness. Dalamud loads dev plugins AND installed plugins in
+    /// the same pass, so leaving the old copy in place means two instances of
+    /// the same plugin registering the same command and the same hotkeys.
+    ///
+    /// The profile entry is deliberately not touched here -
+    /// <see cref="EnableInstalledPlugin"/> has already pointed it at the
+    /// installed copy.
+    /// </summary>
+    private void RemoveDevInstall(JObject config, JArray loadLocations, string devDllPath)
+    {
+        var removed = false;
+
+        for (var i = loadLocations.Count - 1; i >= 0; i--)
+        {
+            if (string.Equals((string?)loadLocations[i]["Path"], devDllPath, StringComparison.OrdinalIgnoreCase))
+            {
+                loadLocations.RemoveAt(i);
+                removed = true;
+            }
+        }
+
+        if (config["DevPluginSettings"] is JObject devSettings)
+        {
+            foreach (var key in devSettings.Properties().Select(p => p.Name).ToList())
+            {
+                if (string.Equals(key, devDllPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    devSettings.Remove(key);
+                    removed = true;
+                }
+            }
+        }
+
+        var devDir = Path.GetDirectoryName(devDllPath);
+        if (devDir != null && Directory.Exists(devDir))
+        {
+            try
+            {
+                Directory.Delete(devDir, recursive: true);
+                removed = true;
+            }
+            catch (Exception ex)
+            {
+                // Loud, because the consequence is two copies running at once.
+                Warn(Loc.Get("KrDevInstallStuck", devDir, ex.Message));
+            }
+        }
+
+        if (removed)
+            Info(Loc.Get("KrDevInstallRemoved"));
     }
 
     // ── GitHub-API-Helfer ──────────────────────────────────────────────────
