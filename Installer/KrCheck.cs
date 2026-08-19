@@ -34,7 +34,7 @@ internal static class KrCheck
     {
         if (!AttachConsole(-1)) AllocConsole();
 
-        var service = new InstallerService { SkipVnavmesh = skipVnavmesh };
+        var service = new InstallerService { SkipVnavmesh = skipVnavmesh, SkipSelfUpdate = true };
         service.LogMessage += Console.WriteLine;
         // The GUI asks this one in a MessageBox. Headless means yes - somebody
         // who typed --install is not waiting to be asked.
