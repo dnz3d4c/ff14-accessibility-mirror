@@ -81,6 +81,30 @@ public sealed partial class InstallerService
     private const string InstallerExeAssetName = "FF14AccessibilityInstaller-KR.exe";
     private const string AccessibilityZipAssetName = "FF14Accessibility.zip";
 
+    /// <summary>
+    /// Our own Dalamud repository, and the value that goes into the installed
+    /// manifest's InstalledFromUrl once it is registered.
+    ///
+    /// OFFICIAL (see <see cref="OfficialSource"/>) got the plugin loaded, but it
+    /// is a claim that the main repository lists us, and it does not. Dalamud
+    /// then sets IsDecommissioned on the plugin (LocalPlugin.cs:196-198), and a
+    /// decommissioned plugin is skipped when a profile is applied again
+    /// (ProfileManager.cs:258) - so switching characters turns the mod off and
+    /// leaves a warning instead of an error. Registering the repository makes
+    /// both IsOrphaned and IsDecommissioned false, and updates start working.
+    ///
+    /// Dalamud compares this against the repository's Url with ==, so the two
+    /// strings have to match exactly, trailing slash and casing included. Every
+    /// comparison on it here uses StringComparison.Ordinal for the same reason.
+    /// </summary>
+    private const string KrRepoUrl =
+        "https://github.com/dnz3d4c/ff14-ko-accessibility/releases/latest/download/repo.json";
+
+    /// <summary>The release page a person can open. Printed when there is no zip
+    /// to install and no way to fetch one.</summary>
+    private const string KrReleasePage =
+        "https://github.com/dnz3d4c/ff14-ko-accessibility/releases/latest";
+
     // Korean build: the profile is XIVLauncherKR and nothing creates it for us.
     // See KrProfile for why each piece matters.
     private static readonly string XivLauncherRoot = KrProfile.Root;
@@ -136,6 +160,21 @@ public sealed partial class InstallerService
     public bool SkipSelfUpdate { get; set; }
 
     /// <summary>
+    /// Leaves out the release check for the plugin itself, so the zip lying next
+    /// to the EXE is what gets installed. Set by --install.
+    ///
+    /// This is not an optimisation. tools/pack-check measures the artifact that
+    /// was just built: it verifies dist\FF14Accessibility.zip binds against the
+    /// Korean ClientStructs, then drives --install and measures what landed. If
+    /// the installer may fetch the release instead, those two steps stop looking
+    /// at the same file, and the binding check - which exists because a global
+    /// build once shipped and died on the first gearset call - stops protecting
+    /// anything. It also keeps the automated path off the network, the same way
+    /// <see cref="SkipVnavmesh"/> does.
+    /// </summary>
+    public bool SkipReleaseCheck { get; set; }
+
+    /// <summary>
     /// The version folder of the installed copy, or null if there is none.
     /// Exists so --check and --install can report the result from outside the
     /// GUI: "the installer said it worked" and "the files are where Dalamud
@@ -171,8 +210,20 @@ public sealed partial class InstallerService
         // The Korean release channel exists now (status.md D-1), so this runs
         // again. It is the only path by which a user who already has the
         // installer on disk ever gets a newer one.
-        if (!SkipSelfUpdate && await TrySelfUpdateAsync(ownVersion))
-            return true;
+        //
+        // Wrapped, and deliberately so: the update check is optional and the
+        // install is not. TrySelfUpdateAsync catches what it expects, but a
+        // proxy answering 200 with an HTML page is not on that list, and an
+        // optional step must not be able to end the run before it starts.
+        try
+        {
+            if (!SkipSelfUpdate && await TrySelfUpdateAsync(ownVersion))
+                return true;
+        }
+        catch (Exception ex)
+        {
+            Warn(Loc.Get("InstallerCheckFailed", ex.Message));
+        }
 
         try
         {
@@ -181,7 +232,7 @@ public sealed partial class InstallerService
                 return false; // Dalamud fehlt - der Nutzer muss erst den Updater laufen lassen.
             Info(string.Empty);
 
-            var accResult = await UpdateAccessibilityPluginAsync(ownVersion);
+            var accResult = await UpdateAccessibilityPluginAsync();
             Info(string.Empty);
             var vnavResult = SkipVnavmesh ? Loc.Get("SkippedShort") : await UpdateVnavmeshAsync();
             Info(string.Empty);
@@ -202,7 +253,11 @@ public sealed partial class InstallerService
         catch (Exception ex)
         {
             Error(Loc.Get("UnexpectedError", ex.Message));
-            Error(Loc.Get("NoPartialWrite"));
+            // NOT "nothing was written". By the time anything lands here the
+            // plugin files may already be deployed and old version folders
+            // already gone, so that sentence was a false reassurance - and the
+            // people who need it cannot check for themselves.
+            Error(Loc.Get("UnexpectedErrorWhere"));
         }
         return false;
     }
@@ -234,10 +289,21 @@ public sealed partial class InstallerService
             Info(Loc.Get("KrProfileFound"));
 
         var runtime = KrProfile.EnsureRuntimeVariable();
-        if (runtime != null)
+        switch (runtime.State)
         {
-            Info(Loc.Get("KrRuntimeVariableSet", runtime));
-            Info(Loc.Get("KrRuntimeNeedsRestart"));
+            case KrProfile.RuntimeState.JustSet:
+                Info(Loc.Get("KrRuntimeVariableSet", runtime.Folder));
+                Info(Loc.Get("KrRuntimeNeedsRestart"));
+                break;
+
+            // The failure this class calls the nasty one at the top: everything
+            // reports success and the CLR simply never comes up inside the game.
+            // It used to be indistinguishable from "already fine" - both returned
+            // null and neither said anything.
+            case KrProfile.RuntimeState.DotnetMissing:
+                Warn(Loc.Get("KrRuntimeNoDotnet", runtime.Folder));
+                Info(Loc.Get("KrRuntimeGetDotnet"));
+                break;
         }
 
         if (KrProfile.DalamudInstalled)
@@ -246,13 +312,24 @@ public sealed partial class InstallerService
         // Two different situations wear the same face here, and telling them
         // apart is the whole point: the updater being absent is ours to fix,
         // Dalamud being absent needs a button pressed in the updater's window.
-        if (!KrProfile.UpdaterInstalled && !await SetupKrUpdaterAsync())
-            return false;
+        if (!KrProfile.UpdaterInstalled)
+            await SetupKrUpdaterAsync();
 
+        // Printed whether or not that worked. These four lines used to sit behind
+        // an early return, so somebody whose download failed heard "fetch it by
+        // hand" and nothing else - no path, no page, no next step.
         Warn(Loc.Get("KrDalamudMissing"));
         Info(Loc.Get("KrDalamudGetIt"));
         Info("  " + KrProfile.UpdaterPath);
         Info(Loc.Get("KrDalamudThenCheckUpdate"));
+
+        if (!KrProfile.UpdaterInstalled)
+        {
+            // Nothing at that path to open yet, so say where it comes from.
+            Info(Loc.Get("KrUpdaterGetByHand"));
+            Info("  " + KrProfile.UpdaterReleasePage);
+            return false;
+        }
 
         // Opening it saves the one step the user would otherwise have to find a
         // path for. Failing to open it changes nothing - the path is printed above.
@@ -413,19 +490,17 @@ public sealed partial class InstallerService
     ///   - the DLL name MUST equal the plugin folder name.
     ///   - the manifest needs InstalledFromUrl (see <see cref="OfficialSource"/>).
     /// </summary>
-    private async Task<string> UpdateAccessibilityPluginAsync(string ownVersion)
+    private async Task<string> UpdateAccessibilityPluginAsync()
     {
         var pluginRoot = Path.Combine(InstalledPluginsRoot, AccessibilityInternalName);
         var previous = FindInstalledManifest(pluginRoot);
         var wasInstalled = previous != null;
 
+        // ChoosePluginSourceAsync says why there is nothing to install - it is
+        // the only place that knows whether the release was even asked.
         var source = await ChoosePluginSourceAsync(previous?.Version);
         if (source.Kind == SourceKind.None)
-        {
-            Warn(Loc.Get("KrNoLocalBuild"));
-            Info(Loc.Get("KrBuildHint"));
             return Loc.Get("KrErrorNoLocalBuild");
-        }
         if (source.Kind == SourceKind.AlreadyNewest)
         {
             Info(Loc.Get("AccessibilityUpToDate", previous!.Version));
@@ -455,14 +530,17 @@ public sealed partial class InstallerService
                 : Loc.Get("KrUsingLocalBuild", builtVersion, zipPath));
 
             var versionDir = Path.Combine(pluginRoot, builtVersion);
-            // Old version folders are build output, and Dalamud loads the highest
-            // version it finds - leaving one behind means a downgrade survives.
-            RemoveOtherVersions(pluginRoot, versionDir);
             DeployPluginFiles(extractDir, versionDir);
             // Carry the identity across updates. The profile entry in
             // dalamudConfig.json is keyed by this GUID; a fresh one on every
             // update would leave a dead entry behind each time.
             WriteInstalledManifest(versionDir, previous?.WorkingPluginId);
+
+            // Old version folders are build output, and Dalamud loads the highest
+            // version it finds - leaving one behind means a downgrade survives.
+            // Dropped only now that the new copy is complete: doing it first meant
+            // a DLL locked by a running game left the user with neither version.
+            RemoveOtherVersions(pluginRoot, versionDir);
             Info(Loc.Get("KrInstalledAt", versionDir));
 
             Info(wasInstalled
@@ -518,6 +596,13 @@ public sealed partial class InstallerService
         var localZip = KrProfile.FindLocalBuild();
         var localVersion = localZip == null ? null : ReadVersionFromZip(localZip);
 
+        PluginSource Local() => localZip == null ? NoSource() : new PluginSource(SourceKind.LocalBuild, localZip);
+
+        // --install has to install the zip it was pointed at and nothing else.
+        // See SkipReleaseCheck for what silently breaks otherwise.
+        if (SkipReleaseCheck)
+            return Local();
+
         (string tag, string url, string name)? asset = null;
         try
         {
@@ -527,13 +612,16 @@ public sealed partial class InstallerService
                 n.Equals(AccessibilityZipAssetName, StringComparison.OrdinalIgnoreCase));
             if (asset == null) Warn(Loc.Get("NoAccessibilityAssetFound"));
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or FormatException)
+        // JsonException belongs here: GetLatestReleaseAsync parses, and a proxy
+        // or an error page answering 200 with HTML lands exactly there.
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                       or FormatException or JsonException)
         {
             Warn(Loc.Get("KrReleaseUnreachable", ex.Message));
         }
 
         if (asset == null)
-            return localZip == null ? new PluginSource(SourceKind.None) : new PluginSource(SourceKind.LocalBuild, localZip);
+            return Local();
 
         var remoteVersion = asset.Value.tag.TrimStart('v', 'V');
 
@@ -545,7 +633,11 @@ public sealed partial class InstallerService
             return new PluginSource(SourceKind.LocalBuild, localZip);
         }
 
-        if (localVersion == null && installedVersion != null && !IsNewer(remoteVersion, installedVersion))
+        // Whether a local zip happens to be lying around says nothing about
+        // whether the installed copy needs replacing. Keying this on its absence
+        // meant that anyone who kept the download folder re-downloaded and
+        // reinstalled the same version on every single run.
+        if (installedVersion != null && !IsNewer(remoteVersion, installedVersion))
             return new PluginSource(SourceKind.AlreadyNewest);
 
         var zipPath = Path.Combine(Path.GetTempPath(), "FF14Accessibility_" + Guid.NewGuid() + ".zip");
@@ -559,8 +651,29 @@ public sealed partial class InstallerService
         {
             Warn(Loc.Get("KrReleaseDownloadFailed", ex.Message));
             TryDelete(zipPath);
-            return localZip == null ? new PluginSource(SourceKind.None) : new PluginSource(SourceKind.LocalBuild, localZip);
+            return Local();
         }
+    }
+
+    /// <summary>
+    /// Nothing to install, and the reason decides what to say. A user running the
+    /// EXE out of the download folder needs the release page; only the automated
+    /// path, which was told not to look at the release, needs "build it first".
+    /// Handing an end user a build command is handing them our job.
+    /// </summary>
+    private PluginSource NoSource()
+    {
+        Warn(Loc.Get("KrNoLocalBuild"));
+        if (SkipReleaseCheck)
+        {
+            Info(Loc.Get("KrBuildHint"));
+        }
+        else
+        {
+            Info(Loc.Get("KrGetFromReleasePage"));
+            Info("  " + KrReleasePage);
+        }
+        return new PluginSource(SourceKind.None);
     }
 
     /// <summary>
@@ -609,6 +722,14 @@ public sealed partial class InstallerService
             var manifestPath = Path.Combine(versionDir, AccessibilityInternalName + ".json");
             var version = ReadLocalManifestVersion(manifestPath);
             if (version == null || !Version.TryParse(version, out var parsed)) continue;
+
+            // A manifest on its own is not an installed copy. An extraction that
+            // stopped halfway leaves the json and no DLL, and this method is what
+            // InstalledCopyPath answers with - so --install exited 0 and said the
+            // install worked while nothing could load. Same rule tools/pack-check
+            // applies from the outside (installed_layout_problems).
+            if (!File.Exists(Path.Combine(versionDir, AccessibilityInternalName + ".dll"))) continue;
+
             if (bestVersion != null && parsed <= bestVersion) continue;
 
             bestVersion = parsed;
@@ -982,8 +1103,13 @@ public sealed partial class InstallerService
 
         try
         {
+            // Kept, not refreshed. Overwriting meant that running the installer
+            // again after something went wrong copied the damaged file over the
+            // only good copy of it - and nothing here ever reads this back, so a
+            // person is the only one who could have noticed.
             var backup = DalamudConfigPath + ".bak-installer";
-            File.Copy(DalamudConfigPath, backup, overwrite: true);
+            if (!File.Exists(backup))
+                File.Copy(DalamudConfigPath, backup);
 
             // Only for vnavmesh, which keeps the dev route: without DevMode
             // Dalamud never scans DevPluginLoadLocations at all (PluginManager
@@ -1004,8 +1130,20 @@ public sealed partial class InstallerService
             // same plugin beside the installed one - same commands, same hotkeys.
             RemoveDevInstall(config, loadLocations, accDevDll);
 
+            // Before the write, and the manifest only after it. The two halves
+            // have to agree, and if the run is cut in half the surviving state
+            // has to be a working one: a config naming a repository no manifest
+            // points at is harmless, a manifest naming a repository the config
+            // does not carry is an orphan that never loads and never complains.
+            var repo = EnsureThirdPartyRepo(config, KrRepoUrl);
+            if (repo == RepoState.Added) Info(Loc.Get("KrRepoRegistered", KrRepoUrl));
+            if (repo == RepoState.NoList) Warn(Loc.Get("KrRepoListMissing"));
+
             WriteAllTextNoBom(DalamudConfigPath, config.ToString());
             Info(Loc.Get("ConfigUpdated", Path.GetFileName(backup)));
+
+            if (repo != RepoState.NoList && installed != null)
+                PointManifestAtRepo(installed, KrRepoUrl);
 
             if (!enabled)
             {
@@ -1020,6 +1158,83 @@ public sealed partial class InstallerService
             Error(Loc.Get("ConfigWriteFailed", ex.Message));
             Error(Loc.Get("CloseGameAndLauncher"));
             return Loc.Get("ConfigWriteFailedReturn");
+        }
+    }
+
+    /// <summary>What <see cref="EnsureThirdPartyRepo"/> found.</summary>
+    private enum RepoState
+    {
+        /// <summary>The config has no ThirdRepoList to register into.</summary>
+        NoList,
+
+        /// <summary>Our repository was not there and now is.</summary>
+        Added,
+
+        /// <summary>It was already registered; only IsEnabled was made sure of.</summary>
+        AlreadyThere,
+    }
+
+    /// <summary>
+    /// Puts our repository into ThirdRepoList, or makes sure the entry that is
+    /// already there is enabled.
+    ///
+    /// The entry carries exactly two fields besides its type. Dalamud reads no
+    /// others, and inventing any would be writing into a shape we do not own.
+    /// AutoUpdateBehavior and everything else in this file stays untouched:
+    /// registering a repository is what makes updates possible, deciding to run
+    /// them is the user's.
+    /// </summary>
+    private static RepoState EnsureThirdPartyRepo(JObject config, string url)
+    {
+        if (config["ThirdRepoList"]?["$values"] is not JArray repos)
+            return RepoState.NoList;
+
+        // Ordinal: Dalamud matches InstalledFromUrl against this string with ==,
+        // so two spellings that differ only in case are two different repositories
+        // to it, and treating them as one here would produce an orphan.
+        var existing = repos.FirstOrDefault(r =>
+            string.Equals((string?)r["Url"], url, StringComparison.Ordinal));
+        if (existing != null)
+        {
+            existing["IsEnabled"] = true;
+            return RepoState.AlreadyThere;
+        }
+
+        repos.Add(new JObject
+        {
+            ["$type"] = "Dalamud.Configuration.ThirdPartyRepoSettings, Dalamud",
+            ["Url"] = url,
+            ["IsEnabled"] = true,
+        });
+        return RepoState.Added;
+    }
+
+    /// <summary>
+    /// Moves the installed manifest off OFFICIAL and onto our repository.
+    ///
+    /// Called only after dalamudConfig.json has been written with that repository
+    /// in it. Failing here is survivable by design - the manifest then still says
+    /// OFFICIAL, which is what it said before this ran and which does load.
+    /// </summary>
+    private void PointManifestAtRepo(InstalledCopy installed, string url)
+    {
+        try
+        {
+            var manifest = JsonNode.Parse(File.ReadAllText(installed.ManifestPath))!.AsObject();
+            if (string.Equals(manifest["InstalledFromUrl"]?.GetValue<string>(), url, StringComparison.Ordinal))
+                return;
+
+            manifest["InstalledFromUrl"] = url;
+            File.WriteAllText(installed.ManifestPath, manifest.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            }), new UTF8Encoding(false));
+            Info(Loc.Get("KrRepoManifestPointed"));
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
+        {
+            Warn(Loc.Get("KrRepoManifestFailed", ex.Message));
         }
     }
 
@@ -1305,7 +1520,12 @@ public sealed partial class InstallerService
             var json = await _http.GetStringAsync(manifestAsset.Value.url);
             manifest = JsonNode.Parse(json);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or FormatException)
+        // JsonException too: both the release listing and installer.json are
+        // parsed here, and a 200 carrying an error page fails as JSON, not as
+        // HTTP. Without it the "every failure here is harmless" this method
+        // promises did not hold, and an optional check could end the run.
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
+                                       or FormatException or JsonException)
         {
             Warn(Loc.Get("InstallerCheckFailed", ex.Message));
             return false;
