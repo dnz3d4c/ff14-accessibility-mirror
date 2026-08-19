@@ -1283,7 +1283,10 @@ public sealed partial class InstallerService
             });
         }
 
-        Info(Loc.Get("KrProfileEntrySeeded", internalName, workingId.ToString()));
+        // Two branches above, so two messages. Saying "등록 완료" after an update
+        // tells the user something that did not happen.
+        Info(Loc.Get(existing != null ? "KrProfileEntryUpdated" : "KrProfileEntrySeeded",
+            internalName, workingId.ToString()));
         return true;
     }
 
