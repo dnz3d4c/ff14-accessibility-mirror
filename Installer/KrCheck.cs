@@ -34,7 +34,16 @@ internal static class KrCheck
     {
         if (!AttachConsole(-1)) AllocConsole();
 
-        var service = new InstallerService { SkipVnavmesh = skipVnavmesh, SkipSelfUpdate = true };
+        var service = new InstallerService
+        {
+            SkipVnavmesh = skipVnavmesh,
+            SkipSelfUpdate = true,
+            // Install the zip this EXE was shipped next to, not whatever the
+            // release channel currently holds. tools/pack-check measures the
+            // artifact it just built, and it can only do that if --install
+            // installs that artifact.
+            SkipReleaseCheck = true,
+        };
         service.LogMessage += Console.WriteLine;
         // The GUI asks this one in a MessageBox. Headless means yes - somebody
         // who typed --install is not waiting to be asked.
@@ -67,10 +76,15 @@ internal static class KrCheck
                 ? "created: " + string.Join(", ", created)
                 : "created: nothing was missing");
 
-            var setRuntime = KrProfile.EnsureRuntimeVariable();
-            Console.WriteLine(setRuntime != null
-                ? "DALAMUD_RUNTIME set to " + setRuntime
-                : "DALAMUD_RUNTIME left alone");
+            var ensured = KrProfile.EnsureRuntimeVariable();
+            Console.WriteLine(ensured.State switch
+            {
+                KrProfile.RuntimeState.JustSet => "DALAMUD_RUNTIME set to " + ensured.Folder,
+                // Spelled out, because "left alone" used to cover this too and it
+                // is the one state where the game starts and Dalamud never does.
+                KrProfile.RuntimeState.DotnetMissing => "DALAMUD_RUNTIME NOT set - no .NET at " + ensured.Folder,
+                _ => "DALAMUD_RUNTIME already set to " + ensured.Folder,
+            });
             Console.WriteLine();
         }
 
