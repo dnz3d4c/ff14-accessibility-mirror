@@ -190,10 +190,46 @@ internal static class KrProfile
     public static readonly string ConfigPath = Path.Combine(Root, "dalamudConfig.json");
     public static readonly string LogPath = Path.Combine(Root, "dalamud-kr-gui.log");
 
-    /// <summary>Where the Korean Dalamud updater installs itself by default.</summary>
-    public static readonly string UpdaterPath = Path.Combine(
+    // ── The Korean Dalamud updater ────────────────────────────────────────
+    //
+    // These five constants are mirrored in tools/kr-setup/kr_profile.py and a
+    // test fails if the two drift apart. They decide where the updater is
+    // fetched from and where it lands; if the installer unpacks it somewhere
+    // other than UpdaterPath, it downloads the thing and then reports it
+    // missing.
+
+    /// <summary>Latest release of the Korean Dalamud updater. No pinned tag - we
+    /// ask for whatever is current, the same way the vnavmesh step does.</summary>
+    public const string UpdaterReleaseApi =
+        "https://api.github.com/repos/MiqoKR/kr-dalamud-updater/releases/latest";
+
+    /// <summary>Which of the release assets to take. The release also carries a
+    /// "Payload" zip, which is what the updater uses to update itself - it has no
+    /// executable in it, and taking it would extract cleanly and leave nothing
+    /// runnable behind.</summary>
+    public const string UpdaterAssetMarker = "Portable";
+
+    /// <summary>Under LocalApplicationData: no elevation needed, and it satisfies
+    /// the "ordinary writable folder" the updater's own README-KR.txt asks for.</summary>
+    public const string UpdaterInstallFolder = "KR-Dalamud-Updater";
+    public const string UpdaterAppFolder = "app";
+    public const string UpdaterExeName = "Dalamud.Updater.exe";
+
+    /// <summary>Where the release zip is unpacked. The archive is flat - the exe,
+    /// README-KR.txt and UpdaterReleaseConfig.json all sit at its root - and
+    /// UpdaterReleaseConfig.json has to stay next to the exe for the updater's
+    /// self-update to work, so the three are never split apart.</summary>
+    public static readonly string UpdaterExtractDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "KR-Dalamud-Updater", "app", "Dalamud.Updater.exe");
+        UpdaterInstallFolder, UpdaterAppFolder);
+
+    /// <summary>Where the Korean Dalamud updater installs itself by default.</summary>
+    public static readonly string UpdaterPath = Path.Combine(UpdaterExtractDir, UpdaterExeName);
+
+    /// <summary>True once the updater's executable is on disk. Distinct from
+    /// <see cref="DalamudInstalled"/>: having the updater is our problem to solve,
+    /// having Dalamud needs the user to press Check Update in its window.</summary>
+    public static bool UpdaterInstalled => File.Exists(UpdaterPath);
 
     /// <summary>
     /// Minimal seed for dalamudConfig.json. Dalamud fills in every other default
