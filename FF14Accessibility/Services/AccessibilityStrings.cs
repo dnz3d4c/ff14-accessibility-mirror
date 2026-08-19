@@ -347,24 +347,24 @@ public static partial class AccessibilityStrings
         // und "There are no duties available" heisst dort "Keine Inhalte vorhanden"
         // (Addon 2500/2509, in beiden Sprachen gedumpt). Ein Duty ist also ein
         // "Inhalt", und der Spieler hört das Wort im Spiel bereits.
-        NavCategory.Duties           => IsGerman ? "Inhalte"           : "Duties",
-        NavCategory.QuestNpcs        => IsGerman ? "Quest-NPCs"        : "Quest NPCs",
-        NavCategory.QuestObjects     => IsGerman ? "Quest-Objekte"     : "Quest objects",
-        NavCategory.QuestEnemies     => IsGerman ? "Quest-Gegner"      : "Quest enemies",
-        NavCategory.GatheringNodes   => IsGerman ? "Sammelpunkte"      : "Gathering nodes",
-        NavCategory.Fates            => "FATEs",
-        NavCategory.HuntingTargets   => IsGerman ? "Jagdziele"          : "Hunting targets",
-        NavCategory.FishingSpots     => IsGerman ? "Angelplätze"       : "Fishing spots",
+        NavCategory.Duties           => Pick("Inhalte", "Duties", "임무"),
+        NavCategory.QuestNpcs        => Pick("Quest-NPCs", "Quest NPCs", "퀘스트 NPC"),
+        NavCategory.QuestObjects     => Pick("Quest-Objekte", "Quest objects", "퀘스트 사물"),
+        NavCategory.QuestEnemies     => Pick("Quest-Gegner", "Quest enemies", "퀘스트 적"),
+        NavCategory.GatheringNodes   => Pick("Sammelpunkte", "Gathering nodes", "채집 지점"),
+        NavCategory.Fates            => Pick("FATEs", "FATEs"),
+        NavCategory.HuntingTargets   => Pick("Jagdziele", "Hunting targets", "토벌 대상"),
+        NavCategory.FishingSpots     => Pick("Angelplätze", "Fishing spots", "낚시터"),
         // Bewusst NICHT "Dungeons", obwohl der Wunsch so formuliert war: die Liste
         // haelt auch Prüfungen und Raids. Und bewusst nicht noch einmal "Inhalte" -
         // die Kategorie darüber heisst so und zeigt nur die Türen in der Nähe; das
         // Wort "alle" ist genau der Unterschied zwischen beiden.
-        NavCategory.WorldDuties      => IsGerman ? "Alle Inhalte"      : "All duties",
-        NavCategory.Aetherytes       => IsGerman ? "Ätheryten"         : "Aetherytes",
-        NavCategory.QuestGoals       => IsGerman ? "Quest-Ziele"       : "Quest goals",
-        NavCategory.AcceptableQuests => IsGerman ? "Annehmbare Quests" : "Available quests",
-        NavCategory.Levequests       => IsGerman ? "Freibriefe"        : "Levequests",
-        NavCategory.Waypoints        => IsGerman ? "Wegpunkte"         : "Waypoints",
+        NavCategory.WorldDuties      => Pick("Alle Inhalte", "All duties"),
+        NavCategory.Aetherytes       => Pick("Ätheryten", "Aetherytes", "에테라이트"),
+        NavCategory.QuestGoals       => Pick("Quest-Ziele", "Quest goals", "퀘스트 목표"),
+        NavCategory.AcceptableQuests => Pick("Annehmbare Quests", "Available quests", "받을 수 있는 퀘스트"),
+        NavCategory.Levequests       => Pick("Freibriefe", "Levequests", "길드 의뢰"),
+        NavCategory.Waypoints        => Pick("Wegpunkte", "Waypoints", "경유지"),
         _                            => cat.ToString(),
     };
 
@@ -1890,6 +1890,25 @@ public static partial class AccessibilityStrings
         IsGerman ? $"Übergang nach {name}" : $"Transition to {name}";
     /// <summary>Fallback spoken name for an unnamed aetheryte.</summary>
     public static string AetheryteFallbackName => IsGerman ? "Ätheryt" : "Aetheryte";
+
+    /// <summary>Spoken form of <c>PlaceDestination.TypeLabel</c>. The label itself
+    /// stays German: PlacesService matches on it as an identity string
+    /// (IsAetherytePlace, NearestAetheryteTo), so only the spoken form is
+    /// localised here.
+    ///
+    /// Empty means "say nothing". For zone transitions and the map flag the
+    /// spoken NAME already carries the type (TransitionToName, FlagName), so
+    /// announcing the type as well says the same word twice - the player hears
+    /// "Übergang nach X, Übergang". That doubling is present in every language.</summary>
+    public static string SpokenPlaceType(string typeLabel) => typeLabel switch
+    {
+        "Übergang"   => string.Empty,
+        "Markierung" => string.Empty,
+        "Ätheryt"    => AetheryteFallbackName,
+        "Aethernet"  => Pick("Aethernet", "Aethernet"),
+        "Ort"        => Pick("Ort", "Place"),
+        _            => typeLabel,
+    };
 
     // ════════════════════════════════════════════════════════════════
     //  NavigationService - Gehhilfe (walk guide)
