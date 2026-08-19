@@ -1746,12 +1746,16 @@ public sealed class NavigationService
         SelectedPlaceDestination = place;
 
         // Direction uses X/Z only - the placeholder Y does not affect it.
-        // NOTE: place.TypeLabel is still German here - it is coupled to PlacesService
-        // comparison logic (IsAetherytePlace) and gets translated with that group.
+        // place.TypeLabel stays German - it is an identity string that PlacesService
+        // compares against (IsAetherytePlace). SpokenPlaceType maps it to the spoken
+        // form, and returns empty where the NAME already carries the type, so
+        // transitions and flags no longer say the same word twice.
         // Standing at it? Then take it as the game target too, so it can be used.
         var targeted = TryTargetMarkerObject(place);
 
-        var text = $"{place.Name}, {place.TypeLabel}, " +
+        var typeWord = AccessibilityStrings.SpokenPlaceType(place.TypeLabel);
+        var text = $"{place.Name}, " +
+                   (typeWord.Length > 0 ? $"{typeWord}, " : string.Empty) +
                    $"{FormatDistance(Distance2D(player.Position, place.Position))}, " +
                    $"{CalculateDirection(player, place.Position)}, " +
                    $"{AccessibilityStrings.Counter(_cycleIndex + 1, count)}." +
