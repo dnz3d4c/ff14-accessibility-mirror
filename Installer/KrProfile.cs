@@ -445,13 +445,21 @@ internal static class KrProfile
         return null;
     }
 
-    /// <summary>Opens the Korean Dalamud updater if it is installed. Returns false if it is not.</summary>
+    /// <summary>
+    /// Opens the Korean Dalamud updater if it is installed. Returns false if it is not.
+    ///
+    /// Started without arguments, and that is the point. It used to be handed
+    /// "--no-elevate", which pins the updater to normal rights. The Korean client
+    /// runs elevated, so the injector's OpenProcess answered "access denied"
+    /// (Win32 error 5) every single time and nothing upstream of that said why.
+    /// The updater asks for elevation on its own when it needs it.
+    /// </summary>
     public static bool TryLaunchUpdater()
     {
         if (!File.Exists(UpdaterPath)) return false;
         try
         {
-            Process.Start(new ProcessStartInfo(UpdaterPath, "--no-elevate") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(UpdaterPath) { UseShellExecute = true });
             return true;
         }
         catch (Exception)
