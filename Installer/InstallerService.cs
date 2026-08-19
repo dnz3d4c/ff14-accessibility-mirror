@@ -132,7 +132,7 @@ public sealed class InstallerService
         try
         {
             Info(Loc.Get("KrCheckingProfile"));
-            if (!PrepareKrProfile())
+            if (!await PrepareKrProfileAsync())
                 return false; // Dalamud fehlt - der Nutzer muss erst den Updater laufen lassen.
             Info(string.Empty);
 
@@ -163,12 +163,12 @@ public sealed class InstallerService
     /// prueft danach, ob Dalamud ueberhaupt da ist. Gibt false zurueck, wenn der
     /// Nutzer erst den KR-Updater laufen lassen muss.
     ///
-    /// Der globale Installer laedt an dieser Stelle XIVLauncher herunter. Das
-    /// geht hier nicht: den koreanischen Client bedient ein eigener Launcher,
-    /// und Dalamud kommt aus einer fremden Patch-Pipeline, die wir bewusst nicht
-    /// weiterverteilen.
+    /// Der globale Installer laedt an dieser Stelle XIVLauncher herunter. Wir
+    /// laden stattdessen den KR-Dalamud-Updater - nicht als Weiterverteilung,
+    /// sondern aus seinem eigenen Release, genau wie beim vnavmesh-Schritt.
+    /// Was danach uebrig bleibt, ist der eine Knopf in dessen Fenster.
     /// </summary>
-    private bool PrepareKrProfile()
+    private async Task<bool> PrepareKrProfileAsync()
     {
         // Immer nennen, auch wenn alles stimmt. Landet das Plugin im falschen
         // Ordner, meldet nichts einen Fehler - der Updater legt sein eigenes
@@ -192,11 +192,151 @@ public sealed class InstallerService
         if (KrProfile.DalamudInstalled)
             return true;
 
+        // Two different situations wear the same face here, and telling them
+        // apart is the whole point: the updater being absent is ours to fix,
+        // Dalamud being absent needs a button pressed in the updater's window.
+        if (!KrProfile.UpdaterInstalled && !await SetupKrUpdaterAsync())
+            return false;
+
         Warn(Loc.Get("KrDalamudMissing"));
         Info(Loc.Get("KrDalamudGetIt"));
         Info("  " + KrProfile.UpdaterPath);
         Info(Loc.Get("KrDalamudThenCheckUpdate"));
+
+        // Opening it saves the one step the user would otherwise have to find a
+        // path for. Failing to open it changes nothing - the path is printed above.
+        if (KrProfile.TryLaunchUpdater())
+            Info(Loc.Get("KrUpdaterLaunched"));
+
         return false;
+    }
+
+    /// <summary>
+    /// Fetches the Korean Dalamud updater from its own GitHub release and unpacks
+    /// it. Returns false when the user declined or the fetch failed - the caller
+    /// then falls back to printing the path and the manual instruction.
+    ///
+    /// This is a download, not a redistribution. The repository carries no
+    /// license, so the archive must not travel inside ours; taking it from the
+    /// upstream release on the user's behalf is the same shape as the vnavmesh
+    /// step and touches nothing the license would cover.
+    /// </summary>
+    private async Task<bool> SetupKrUpdaterAsync()
+    {
+        Info(string.Empty);
+        Info(Loc.Get("KrUpdaterWhatItIs1"));
+        Info(Loc.Get("KrUpdaterWhatItIs2"));
+        Info(Loc.Get("KrUpdaterWhatItIs3"));
+
+        if (!(AskYesNo?.Invoke(Loc.Get("AskSetupKrUpdater")) ?? false))
+        {
+            Info(Loc.Get("KrUpdaterSkipped"));
+            return false;
+        }
+
+        string? downloadUrl;
+        try
+        {
+            Info(Loc.Get("KrUpdaterCheckingRelease"));
+            var json = await _http.GetStringAsync(KrProfile.UpdaterReleaseApi);
+            downloadUrl = PickUpdaterAsset(JsonNode.Parse(json)?["assets"]?.AsArray());
+        }
+        catch (HttpRequestException ex)
+        {
+            Warn(Loc.Get("KrUpdaterUnreachable", ex.Message));
+            return false;
+        }
+        catch (TaskCanceledException)
+        {
+            Warn(Loc.Get("KrUpdaterTimeout"));
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Warn(Loc.Get("KrUpdaterUnexpectedError", ex.Message));
+            return false;
+        }
+
+        if (downloadUrl == null)
+        {
+            Warn(Loc.Get("KrUpdaterNoAsset", KrProfile.UpdaterAssetMarker));
+            return false;
+        }
+
+        var zipPath = Path.Combine(Path.GetTempPath(), "kr_dalamud_updater_" + Guid.NewGuid() + ".zip");
+        try
+        {
+            Info(Loc.Get("KrUpdaterDownloading"));
+            await DownloadFileAsync(downloadUrl, zipPath, Loc.Get("KrUpdaterDownloadLabel"));
+
+            // The archive is flat, so it goes into the app folder whole. Overwrite
+            // rather than merge: a half-updated set of the three files is worse
+            // than either version of them.
+            Directory.CreateDirectory(KrProfile.UpdaterExtractDir);
+            ZipFile.ExtractToDirectory(zipPath, KrProfile.UpdaterExtractDir, overwriteFiles: true);
+        }
+        catch (IOException ex)
+        {
+            Error(Loc.Get("KrUpdaterCouldNotWrite", ex.Message));
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Error(Loc.Get("KrUpdaterDownloadFailed", ex.Message));
+            return false;
+        }
+        finally
+        {
+            TryDeleteFile(zipPath);
+        }
+
+        // Unpacking into the right folder is not the same as having a working
+        // updater. Say which, so "nothing happened" has a place to start.
+        if (!KrProfile.UpdaterInstalled)
+        {
+            Error(Loc.Get("KrUpdaterExeMissing", KrProfile.UpdaterPath));
+            return false;
+        }
+
+        Info(Loc.Get("KrUpdaterInstalledAt", KrProfile.UpdaterExtractDir));
+        return true;
+    }
+
+    /// <summary>
+    /// Picks the release asset to download. Mirrored in tools/kr-setup/kr_profile.py
+    /// (<c>pick_updater_asset</c>), where the cases are tested.
+    ///
+    /// Only the "Portable" zip carries an executable. The release also publishes a
+    /// "Payload" zip for the updater's own self-update; downloading that one
+    /// extracts perfectly and leaves nothing to run.
+    /// </summary>
+    private static string? PickUpdaterAsset(JsonArray? assets)
+    {
+        if (assets == null) return null;
+
+        foreach (var entry in assets)
+        {
+            var name = entry?["name"]?.GetValue<string>();
+            var url = entry?["browser_download_url"]?.GetValue<string>();
+            if (name == null || url == null) continue;
+
+            if (name.Contains(KrProfile.UpdaterAssetMarker, StringComparison.OrdinalIgnoreCase) &&
+                name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                return url;
+        }
+        return null;
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+        catch (Exception)
+        {
+            // Leaving a temp file behind must not fail the install.
+        }
     }
 
     // ── Eigenes Plugin (FF14Accessibility) ────────────────────────────────
