@@ -315,7 +315,7 @@ public sealed class UIReaderService : IDisposable
     ];
 
     private static readonly HashSet<string> YesNoLabels =
-        ["Ja", "Nein", "Yes", "No", "??", "???", "Oui", "Non", "예", "아니오"];
+        ["Ja", "Nein", "Yes", "No", "はい", "いいえ", "Oui", "Non", "예", "아니오"];
 
     /// <summary>
     /// [Tiefes Gewoelbe] Das Fenster "Charakterinfo", oder null, solange es nicht gesetzt ist.
