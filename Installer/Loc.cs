@@ -325,6 +325,7 @@ public static class Loc
             ["KrOldVersionRemoved"] = "Alte Version entfernt: {0}",
             ["KrOldVersionKept"] = "Alte Version blieb liegen: {0} ({1}). Dalamud raeumt sie beim naechsten Start auf.",
             ["KrProfileEntrySeeded"] = "Im Profil eingetragen und aktiviert: {0} ({1})",
+            ["KrProfileEntryUpdated"] = "Im Profil aktualisiert und aktiviert: {0} ({1})",
             ["KrDevInstallRemoved"] = "Die fruehere Entwickler-Installation wurde entfernt.",
             ["KrDevInstallStuck"] = "Die fruehere Entwickler-Installation liess sich nicht entfernen: {0} ({1}). Spiel schliessen und erneut ausfuehren - sonst laedt dasselbe Plugin zweimal.",
             ["LanguageKoreanButton"] = "한국어",
@@ -551,6 +552,7 @@ public static class Loc
             ["KrOldVersionRemoved"] = "Removed the old version: {0}",
             ["KrOldVersionKept"] = "Could not remove the old version: {0} ({1}). Dalamud cleans it up on the next start.",
             ["KrProfileEntrySeeded"] = "Registered in the profile and enabled: {0} ({1})",
+            ["KrProfileEntryUpdated"] = "Updated in the profile and enabled: {0} ({1})",
             ["KrDevInstallRemoved"] = "Removed the earlier dev-plugin installation.",
             ["KrDevInstallStuck"] = "Could not remove the earlier dev-plugin installation: {0} ({1}). Close the game and run this again - otherwise the same plugin loads twice.",
             ["LanguageKoreanButton"] = "한국어",
@@ -661,6 +663,7 @@ public static class Loc
             ["KrOldVersionRemoved"] = "옛 버전을 지웠습니다: {0}",
             ["KrOldVersionKept"] = "옛 버전을 지우지 못했습니다: {0} ({1}). Dalamud가 다음 실행 때 정리합니다.",
             ["KrProfileEntrySeeded"] = "프로필 등록 완료: {0} ({1})",
+            ["KrProfileEntryUpdated"] = "프로필 업데이트 완료: {0} ({1})",
             ["KrDevInstallRemoved"] = "예전 개발용 설치를 걷어냈습니다.",
             ["KrDevInstallStuck"] = "예전 개발용 설치를 지우지 못했습니다: {0} ({1}). 게임을 끄고 다시 실행해주세요. 그대로 두면 같은 플러그인을 두 번 불러옵니다.",
 
