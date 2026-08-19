@@ -29,7 +29,7 @@ namespace FF14AccessibilityInstaller;
 ///                        someone else's plugin. Putting it in installedPlugins
 ///                        would mean registering their repository in the user's
 ///                        Dalamud settings, and this project does not write into
-///                        other people's configuration (status.md 4-3).
+///                        other people's configuration (status.md 5-7).
 ///
 /// All status text goes through <see cref="LogMessage"/>, which the GUI writes
 /// into a focusable, read-only, multi-line log textbox (screen-reader friendly).
