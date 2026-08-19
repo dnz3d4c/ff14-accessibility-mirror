@@ -494,7 +494,7 @@ public static partial class AccessibilityStrings
     public static string NoHuntingTargets =>
         Pick("Keine offenen Jagdziele in diesem Rang.",
              "No open hunting targets in this rank.",
-             "이 등급에 남은 토벌 대상 없음.");
+             "이 단계에 남은 토벌 대상 없음.");
 
     // ── Freibriefe (Levequests): Geber-NPCs + Ziele ──
     public static string CategoryLevequestCount(int givers, int goals) =>
@@ -2138,7 +2138,7 @@ public static partial class AccessibilityStrings
     public static string GapCrossWrongZone =>
         Pick("Diesen Übergang gibt es nur auf den Unteren Decks.",
              "This crossing only exists on the Lower Decks.",
-             "건너기는 하층 갑판에서만 할 수 있음.");
+             "이 건너기는 하층 갑판에서만 할 수 있다. 지금은 다른 지역이다.");
 
     /// <summary>Neither side of the gap can be walked to from where we stand.</summary>
     public static string GapCrossNoSide =>
