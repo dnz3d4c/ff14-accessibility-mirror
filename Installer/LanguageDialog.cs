@@ -11,7 +11,13 @@ namespace FF14AccessibilityInstaller;
 /// </summary>
 public sealed class LanguageDialog : Form
 {
-    public string SelectedLanguage { get; private set; } = Loc.Korean;
+    /// <summary>
+    /// Starts as the preselected language, not as Korean. Closing the window with
+    /// Alt+F4 answers nothing, and the caller saves this value either way - so a
+    /// hardcoded default meant that dismissing the dialog silently overwrote a
+    /// language the user had chosen earlier.
+    /// </summary>
+    public string SelectedLanguage { get; private set; }
 
     private readonly Button _koreanButton;
     private readonly Button _germanButton;
@@ -19,8 +25,10 @@ public sealed class LanguageDialog : Form
 
     public LanguageDialog(string preselectedLanguage)
     {
-        Text = "언어 선택 / Choose language";
-        AccessibleName = "언어 선택 / Choose language";
+        SelectedLanguage = preselectedLanguage;
+
+        Text = Loc.Get("LanguageDialogTitle");
+        AccessibleName = Loc.Get("LanguageDialogTitle");
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -30,8 +38,8 @@ public sealed class LanguageDialog : Form
 
         var label = new Label
         {
-            Text = "언어 선택 / Choose language:",
-            AccessibleName = "언어 선택 / Choose language",
+            Text = Loc.Get("LanguageDialogTitle") + ":",
+            AccessibleName = Loc.Get("LanguageDialogTitle"),
             AutoSize = false,
             Dock = DockStyle.Top,
             Height = 40,
@@ -49,8 +57,8 @@ public sealed class LanguageDialog : Form
 
         _koreanButton = new Button
         {
-            Text = "한국어",
-            AccessibleName = "한국어",
+            Text = Loc.Get("LanguageKoreanButton"),
+            AccessibleName = Loc.Get("LanguageKoreanButton"),
             AutoSize = false,
             Width = 280,
             Height = 40,
@@ -60,8 +68,8 @@ public sealed class LanguageDialog : Form
 
         _germanButton = new Button
         {
-            Text = "Deutsch",
-            AccessibleName = "Deutsch",
+            Text = Loc.Get("LanguageGermanButton"),
+            AccessibleName = Loc.Get("LanguageGermanButton"),
             AutoSize = false,
             Width = 280,
             Height = 40,
@@ -71,8 +79,8 @@ public sealed class LanguageDialog : Form
 
         _englishButton = new Button
         {
-            Text = "English",
-            AccessibleName = "English",
+            Text = Loc.Get("LanguageEnglishButton"),
+            AccessibleName = Loc.Get("LanguageEnglishButton"),
             AutoSize = false,
             Width = 280,
             Height = 40,
