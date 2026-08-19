@@ -75,7 +75,7 @@ public static partial class AccessibilityStrings
     // Configuration und einen Dienst dahinter, der es liest - eine Beschriftung ohne
     // Funktion dahinter ist genau der Weg, auf dem eine tote Einstellung eine
     // Überarbeitung überlebt.
-    public static string OptBeacon => Pick("Gehhilfe-Beacon", "Walk-guide beacon", "길안내 신호음");
+    public static string OptBeacon => Pick("Gehhilfe-Beacon", "Walk-guide beacon", "길안내 알림음");
     public static string OptRouteCues => Pick("Wegpunkt- und Ankunftston",
                                               "Waypoint and arrival cues",
                                               "경유지와 도착 알림음");
@@ -145,7 +145,7 @@ public static partial class AccessibilityStrings
     public static string ChatFiltersUnavailable =>
         Pick("Die Chat-Einstellungen des Spiels sind nicht lesbar. Der Chat läuft in einem Puffer.",
              "The game's chat settings cannot be read. Chat is going to one buffer.",
-             "게임의 로그 필터 설정을 읽을 수 없음. 로그가 버퍼 하나로 모임.");
+             "게임의 로그 필터 설정을 읽을 수 없음. 로그가 갈래 없이 한 곳으로 모임.");
 
     // ── Register wechseln, und was im neuen Register liegt ────────
 
@@ -163,7 +163,7 @@ public static partial class AccessibilityStrings
     public static string ChatTabEntered(string tab, int buffers, string first, int count) =>
         Pick($"{tab}, {buffers} Puffer. {first}, {count}.",
              $"{tab}, {buffers} buffers. {first}, {count}.",
-             $"{tab}, 버퍼 {buffers}개. {first}, {count}.");
+             $"{tab}, 읽을 로그 {buffers}갈래. {first}, {count}.");
 
     /// <summary>Wird gesagt, wenn die Registertaste den Chatlog des Spiels gar nicht
     /// erreicht. Nie Stille: der Spieler hätte sonst keine Möglichkeit, ein fehlendes
@@ -198,7 +198,7 @@ public static partial class AccessibilityStrings
     /// auf einmal, über den Kästchen, in die das Spiel sie aufteilt. Gleiche
     /// Wortregel wie bei <see cref="OptChatTabMaster"/>.</summary>
     public static string OptChatChannelAll =>
-        Pick("Ganze Gruppe vorlesen", "Read whole group aloud", "그룹 전체 읽어 주기");
+        Pick("Ganze Gruppe vorlesen", "Read whole group aloud", "채널 묶음 전체 읽어 주기");
 
     /// <summary>
     /// Die eine Schaltung für Zeilen, für die die Filterliste des Spiels gar kein
@@ -212,7 +212,7 @@ public static partial class AccessibilityStrings
     public static string OptChatUnfiltered =>
         Pick("Meldungen ohne Spielfilter vorlesen",
              "Read lines the game cannot filter",
-             "게임이 거를 수 없는 줄 읽어 주기");
+             "게임 로그 필터로 거를 수 없는 메시지 읽어 주기");
 
     /// <summary>Die Zeile, wenn die Register nicht lesbar sind - eine Schaltung für den
     /// einen Sammelpuffer. Ein Abschnitt, der seinen Namen nennt und dann nichts
@@ -249,5 +249,5 @@ public static partial class AccessibilityStrings
     public static string ChatChannelStillArchived =>
         Pick("Steht weiter zum Nachlesen bereit.",
              "Still available in the history.",
-             "기록에는 그대로 남음.");
+             "로그에는 그대로 남음.");
 }
