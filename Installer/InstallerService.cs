@@ -333,10 +333,53 @@ public sealed partial class InstallerService
 
         // Opening it saves the one step the user would otherwise have to find a
         // path for. Failing to open it changes nothing - the path is printed above.
-        if (KrProfile.TryLaunchUpdater())
-            Info(Loc.Get("KrUpdaterLaunched"));
+        if (!KrProfile.TryLaunchUpdater())
+            return false;
 
+        Info(Loc.Get("KrUpdaterLaunched"));
+
+        // Waiting rather than ending here. "Start this program again" is a step we
+        // can take ourselves, and the line saying so scrolls past behind a window
+        // the user did not open. The first Korean install ended exactly that way:
+        // profile built, Dalamud installed by hand afterwards, and no plugin
+        // anywhere - because RunAsync had already returned on our false.
+        if (await WaitForDalamudAsync())
+        {
+            Info(Loc.Get("KrDalamudArrived"));
+            return true;
+        }
+
+        Warn(Loc.Get("KrDalamudWaitGaveUp", DalamudWaitMinutes));
         return false;
+    }
+
+    /// <summary>
+    /// How long to wait for Dalamud to appear in the profile. Generous on purpose:
+    /// the updater downloads Dalamud and its assets, and somebody using a screen
+    /// reader has to find and press a button in a window that just took focus.
+    /// </summary>
+    private const int DalamudWaitMinutes = 15;
+
+    /// <summary>
+    /// Waits until the updater has put Dalamud into the profile. True means it is
+    /// there and the install carries on into the plugin step.
+    ///
+    /// Polls the profile instead of watching the process: the updater stays open
+    /// after its work is done - it launches the game too - so waiting for it to
+    /// exit would wait forever, and its exit code says nothing about Dalamud.
+    /// </summary>
+    private async Task<bool> WaitForDalamudAsync()
+    {
+        Info(Loc.Get("KrWaitingForDalamud", DalamudWaitMinutes));
+
+        var deadline = DateTime.UtcNow.AddMinutes(DalamudWaitMinutes);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (KrProfile.DalamudInstalled) return true;
+            await Task.Delay(TimeSpan.FromSeconds(2));
+        }
+
+        return KrProfile.DalamudInstalled;
     }
 
     /// <summary>
