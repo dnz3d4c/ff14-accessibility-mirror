@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace FF14AccessibilityInstaller;
 
@@ -226,18 +227,61 @@ internal static class KrProfile
     /// <summary>Where the Korean Dalamud updater installs itself by default.</summary>
     public static readonly string UpdaterPath = Path.Combine(UpdaterExtractDir, UpdaterExeName);
 
+    /// <summary>
+    /// The release page a person can open, as opposed to
+    /// <see cref="UpdaterReleaseApi"/>, which only a program can use. Printed
+    /// when fetching the updater failed: without a place to go, "it has to be
+    /// fetched by hand" is not an instruction.
+    /// </summary>
+    public const string UpdaterReleasePage =
+        "https://github.com/MiqoKR/kr-dalamud-updater/releases/latest";
+
     /// <summary>True once the updater's executable is on disk. Distinct from
     /// <see cref="DalamudInstalled"/>: having the updater is our problem to solve,
     /// having Dalamud needs the user to press Check Update in its window.</summary>
     public static bool UpdaterInstalled => File.Exists(UpdaterPath);
 
     /// <summary>
-    /// Minimal seed for dalamudConfig.json. Dalamud fills in every other default
-    /// on its first run; this only has to be parseable and carry the $type so the
-    /// deserializer accepts it.
+    /// Seed for dalamudConfig.json. Dalamud fills in every other default on its
+    /// first run, but three containers have to be here from the start, because
+    /// the installer runs against this file BEFORE Dalamud has ever written it.
+    ///
+    /// The order that makes this necessary is the documented one: the user
+    /// presses Check Update in the updater, which puts addon\Hooks on disk, and
+    /// then runs the installer again - without having started the game. At that
+    /// moment Dalamud looks installed and this file is still whatever we wrote.
+    /// A seed carrying only $type made PatchDalamudConfig refuse to touch it
+    /// ("unexpected structure"), so the very first successful install reported a
+    /// failure, and vnavmesh never got DevMode either.
+    ///
+    ///   DevPluginLoadLocations  -> PatchDalamudConfig bails without it
+    ///   DefaultProfile          -> nothing can be enabled without it
+    ///   ThirdRepoList           -> our repository has nowhere to be registered
+    ///
+    /// The shapes are not invented. They were read out of a dalamudConfig.json
+    /// that Dalamud itself wrote, down to the type names and the short keys of
+    /// ProfileModelV1 - "e" (enabled) is true and "n" is DEFAULT there, and a
+    /// profile seeded without them would deserialize as a disabled profile.
     /// </summary>
     private const string ConfigSeed =
-        "{\"$type\":\"Dalamud.Configuration.Internal.DalamudConfiguration, Dalamud\"}";
+        "{\"$type\":\"Dalamud.Configuration.Internal.DalamudConfiguration, Dalamud\"," +
+        "\"DevPluginLoadLocations\":{" +
+            "\"$type\":\"System.Collections.Generic.List`1[[Dalamud.Configuration.DevPluginLocationSettings, Dalamud]], System.Private.CoreLib\"," +
+            "\"$values\":[]}," +
+        "\"ThirdRepoList\":{" +
+            "\"$type\":\"System.Collections.Generic.List`1[[Dalamud.Configuration.ThirdPartyRepoSettings, Dalamud]], System.Private.CoreLib\"," +
+            "\"$values\":[]}," +
+        "\"DefaultProfile\":{" +
+            "\"$type\":\"Dalamud.Plugin.Internal.Profiles.ProfileModelV1, Dalamud\"," +
+            "\"p\":null,\"e4c\":false," +
+            "\"pc\":{" +
+                "\"$type\":\"System.Collections.Generic.List`1[[Dalamud.Plugin.Internal.Profiles.ProfileModelV1+ProfileModelV1Character, Dalamud]], System.Private.CoreLib\"," +
+                "\"$values\":[]}," +
+            "\"e\":true,\"c\":0," +
+            "\"Plugins\":{" +
+                "\"$type\":\"System.Collections.Generic.List`1[[Dalamud.Plugin.Internal.Profiles.ProfileModelV1+ProfileModelV1Plugin, Dalamud]], System.Private.CoreLib\"," +
+                "\"$values\":[]}," +
+            "\"id\":\"00000000-0000-0000-0000-000000000000\",\"n\":\"DEFAULT\"}}";
 
     /// <summary>True once the updater has produced a hook folder, i.e. Dalamud is present.</summary>
     public static bool DalamudInstalled => Directory.Exists(Path.Combine(Root, "addon", "Hooks"));
@@ -272,8 +316,67 @@ internal static class KrProfile
             File.WriteAllText(ConfigPath, ConfigSeed, new UTF8Encoding(false));
             created.Add("dalamudConfig.json");
         }
+        else
+        {
+            created.AddRange(AddMissingContainers());
+        }
 
         return created;
+    }
+
+    /// <summary>
+    /// Adds the containers of <see cref="ConfigSeed"/> that an existing
+    /// dalamudConfig.json does not have.
+    ///
+    /// Fixing the seed alone would not have been enough: a profile written by an
+    /// earlier version of this installer already has the file, so the seed is
+    /// never written again and the file stays without them. That is the same
+    /// dead end, reached by upgrading instead of by installing.
+    ///
+    /// Only ever adds, and only what is missing. A container being absent means
+    /// Dalamud has not written this file yet - it writes all of them, always - so
+    /// there is no case where this overwrites somebody else's value.
+    /// </summary>
+    private static List<string> AddMissingContainers()
+    {
+        var added = new List<string>();
+        try
+        {
+            var text = File.ReadAllText(ConfigPath, new UTF8Encoding(false));
+            if (JsonNode.Parse(text) is not JsonObject config) return added;
+            if (JsonNode.Parse(ConfigSeed) is not JsonObject seed) return added;
+
+            foreach (var (key, value) in seed)
+            {
+                if (value is not JsonObject container || config.ContainsKey(key)) continue;
+                config[key] = container.DeepClone();
+                added.Add("dalamudConfig.json: " + key);
+            }
+
+            if (added.Count > 0)
+                File.WriteAllText(ConfigPath, config.ToJsonString(), new UTF8Encoding(false));
+        }
+        catch (Exception)
+        {
+            // A config we cannot read is PatchDalamudConfig's problem to report,
+            // with a message written for it. Failing the whole bootstrap here
+            // would replace that message with a worse one.
+            return added;
+        }
+        return added;
+    }
+
+    /// <summary>How <see cref="EnsureRuntimeVariable"/> left DALAMUD_RUNTIME.</summary>
+    public enum RuntimeState
+    {
+        /// <summary>Already pointing at a folder that exists. Nothing to do.</summary>
+        AlreadySet,
+
+        /// <summary>Just pointed at the system .NET install.</summary>
+        JustSet,
+
+        /// <summary>There is no .NET install to point it at.</summary>
+        DotnetMissing,
     }
 
     /// <summary>
@@ -281,23 +384,29 @@ internal static class KrProfile
     /// Dalamud.Boot reads this to find the runtime it loads into the game; the
     /// global side gets it from XIVLauncher's private runtime.
     ///
-    /// Returns null when nothing had to change, otherwise the value that was set.
+    /// Returns the state and the folder it concerns. The two failures used to be
+    /// one: "already fine" and "no .NET to point at" both returned null, and the
+    /// caller only had a message for the success. So the third failure this class
+    /// warns about at the top - the one that looks like it worked - was also the
+    /// one that produced no line anywhere.
+    ///
     /// The variable lands in the user environment, so the game has to be started
     /// fresh afterwards - a process inherits its environment at launch.
     /// </summary>
-    public static string? EnsureRuntimeVariable()
+    public static (RuntimeState State, string Folder) EnsureRuntimeVariable()
     {
-        var existing = Environment.GetEnvironmentVariable("DALAMUD_RUNTIME", EnvironmentVariableTarget.User);
-        if (!string.IsNullOrWhiteSpace(existing) && Directory.Exists(existing))
-            return null;
-
         var dotnetRoot = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet");
+
+        var existing = Environment.GetEnvironmentVariable("DALAMUD_RUNTIME", EnvironmentVariableTarget.User);
+        if (!string.IsNullOrWhiteSpace(existing) && Directory.Exists(existing))
+            return (RuntimeState.AlreadySet, existing);
+
         if (!Directory.Exists(dotnetRoot))
-            return null;
+            return (RuntimeState.DotnetMissing, dotnetRoot);
 
         Environment.SetEnvironmentVariable("DALAMUD_RUNTIME", dotnetRoot, EnvironmentVariableTarget.User);
-        return dotnetRoot;
+        return (RuntimeState.JustSet, dotnetRoot);
     }
 
     /// <summary>
