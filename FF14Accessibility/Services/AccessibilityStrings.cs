@@ -341,7 +341,7 @@ public static partial class AccessibilityStrings
         NavCategory.QuestObjects     => Pick("Quest-Objekte", "Quest objects", "퀘스트 사물"),
         NavCategory.QuestEnemies     => Pick("Quest-Gegner", "Quest enemies", "퀘스트 적"),
         NavCategory.GatheringNodes   => Pick("Sammelpunkte", "Gathering nodes", "채집 지점"),
-        NavCategory.Fates            => "FATEs",
+        NavCategory.Fates            => Pick("FATEs", "FATEs"),
         NavCategory.HuntingTargets   => Pick("Jagdziele", "Hunting targets", "토벌 대상"),
         NavCategory.FishingSpots     => Pick("Angelplätze", "Fishing spots", "낚시터"),
         NavCategory.Aetherytes       => Pick("Ätheryten", "Aetherytes", "에테라이트"),
@@ -1824,6 +1824,25 @@ public static partial class AccessibilityStrings
         Pick($"Übergang nach {name}", $"Transition to {name}", $"{name} 방향 통로");
     /// <summary>Fallback spoken name for an unnamed aetheryte.</summary>
     public static string AetheryteFallbackName => Pick("Ätheryt", "Aetheryte", "에테라이트");
+
+    /// <summary>Spoken form of <c>PlaceDestination.TypeLabel</c>. The label itself
+    /// stays German: PlacesService matches on it as an identity string
+    /// (IsAetherytePlace, NearestAetheryteTo), so only the spoken form is
+    /// localised here.
+    ///
+    /// Empty means "say nothing". For zone transitions and the map flag the
+    /// spoken NAME already carries the type (TransitionToName, FlagName), so
+    /// announcing the type as well says the same word twice - the player hears
+    /// "Übergang nach X, Übergang". That doubling is present in every language.</summary>
+    public static string SpokenPlaceType(string typeLabel) => typeLabel switch
+    {
+        "Übergang"   => string.Empty,
+        "Markierung" => string.Empty,
+        "Ätheryt"    => AetheryteFallbackName,
+        "Aethernet"  => Pick("Aethernet", "Aethernet"),
+        "Ort"        => Pick("Ort", "Place"),
+        _            => typeLabel,
+    };
 
     // ════════════════════════════════════════════════════════════════
     //  NavigationService - Gehhilfe (walk guide)
