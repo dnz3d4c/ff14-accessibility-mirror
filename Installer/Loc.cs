@@ -292,6 +292,10 @@ public static class Loc
             ["KrNoLocalBuild"] = "Kein gebautes Plugin gefunden.",
             ["KrBuildHint"] = "Bitte zuerst run\build.bat ausfuehren.",
             ["KrUsingLocalBuild"] = "Verwende lokalen Build {0} aus {1}",
+            ["KrUsingRelease"] = "Verwende Release {0}",
+            ["KrReleaseUnreachable"] = "Release konnte nicht abgefragt werden ({0}). Es geht mit dem lokalen Build weiter.",
+            ["KrLocalBuildWins"] = "Lokaler Build {0} ist nicht aelter als Release {1} - er wird verwendet.",
+            ["KrReleaseDownloadFailed"] = "Download des Releases fehlgeschlagen ({0}).",
             ["KrErrorNoLocalBuild"] = "Fehler: kein lokaler Build vorhanden.",
             ["KrBuildVersionUnreadable"] = "Das gebaute Manifest nennt keine brauchbare Version ({0}). Abbruch - der Ordnername muss eine Version sein.",
             ["KrInstalledAt"] = "Installiert nach: {0}",
@@ -491,6 +495,10 @@ public static class Loc
             ["KrNoLocalBuild"] = "No built plugin found.",
             ["KrBuildHint"] = "Run run\build.bat first.",
             ["KrUsingLocalBuild"] = "Using local build {0} from {1}",
+            ["KrUsingRelease"] = "Using release {0}",
+            ["KrReleaseUnreachable"] = "Could not check the release ({0}). Carrying on with the local build.",
+            ["KrLocalBuildWins"] = "Local build {0} is not older than release {1} - using the local build.",
+            ["KrReleaseDownloadFailed"] = "Downloading the release failed ({0}).",
             ["KrErrorNoLocalBuild"] = "Error: no local build available.",
             ["KrBuildVersionUnreadable"] = "The built manifest carries no usable version ({0}). Stopping - the folder name has to be a version.",
             ["KrInstalledAt"] = "Installed to: {0}",
@@ -510,6 +518,45 @@ public static class Loc
             ["ErrorPrefix"] = "실패: ",
             ["UnknownVersion"] = "알 수 없음",
             ["InstallerHeader"] = "FF14 접근성 모드 설치 프로그램 (한국 서버용, 버전 {0})",
+
+            // 설치 프로그램 자기 업데이트
+            ["CheckingInstallerVersion"] = "설치 프로그램의 새 버전이 있는지 확인한다 ...",
+            ["NoInstallerManifest"] = "릴리스에 설치 프로그램 버전 정보가 없다 - 확인을 건너뛴다.",
+            ["InstallerCheckFailed"] = "설치 프로그램 버전을 확인하지 못했다: {0}. 설치는 그대로 이어진다.",
+            ["InstallerManifestUnreadable"] = "설치 프로그램 버전 정보를 읽지 못했다 - 확인을 건너뛴다.",
+            ["InstallerUpToDate"] = "설치 프로그램 {0} - 이미 최신이다.",
+            ["InstallerAssetMissing"] = "새 설치 프로그램 파일({0})이 릴리스에 없다 - 업데이트를 건너뛴다.",
+            ["InstallerOwnPathUnknown"] = "이 프로그램 자신의 경로를 알아내지 못했다 - 설치 프로그램 업데이트를 건너뛴다.",
+            ["InstallerUpdateAvailable"] = "새 설치 프로그램 버전이 있다: {0} (설치된 것은 {1}).",
+            ["InstallerUpdateQuestion"] =
+                "설치 프로그램의 새 버전이 있다({0}).\n\n" +
+                "지금 내려받아 실행할까? 내려받는 크기는 약 {1}메가바이트다.\n\n" +
+                "설치 프로그램이 잠깐 닫혔다가 자동으로 다시 실행된다. " +
+                "그 다음 설치가 알아서 이어진다.\n\n" +
+                "예 = 지금 업데이트, 아니오 = 지금 버전 그대로 진행.",
+            ["InstallerUpdateDeclined"] = "설치 프로그램 업데이트를 건너뛰었다. 지금 버전 그대로 이어서 한다.",
+            ["DownloadingInstaller"] = "설치 프로그램 {0}을 내려받는다 ...",
+            ["InstallerDownloadLabel"] = "설치 프로그램",
+            ["InstallerDownloadFailed"] = "설치 프로그램 업데이트를 내려받지 못했다: {0}. 지금 버전 그대로 이어서 한다.",
+            ["InstallerHashOk"] = "새 설치 프로그램 파일의 체크섬이 맞다.",
+            ["InstallerNoHash"] = "릴리스에 체크섬이 없다 - 내려받은 파일을 검사 없이 쓴다.",
+            ["InstallerHashMismatch"] = "내려받은 설치 프로그램의 체크섬이 맞지 않는다. 업데이트를 중단하고 지금 버전 그대로 이어서 한다.",
+            ["InstallerStartFailed"] = "새 설치 프로그램을 실행하지 못했다: {0}. 지금 버전 그대로 이어서 한다.",
+            ["InstallerRestarting"] = "설치 프로그램을 {0}으로 업데이트한다. 이 창은 지금 닫히고 잠시 뒤 자동으로 다시 실행된다 ...",
+            ["InstallerUpdatedTo"] = "설치 프로그램을 {0}으로 업데이트했다. 설치는 자동으로 이어진다.",
+            ["InstallerUpdatedMessage"] =
+                "설치 프로그램을 {0}으로 업데이트하고 다시 실행했다.\n\n" +
+                "확인을 누르면 설치가 자동으로 이어진다 - 더 할 일은 없다.",
+            ["SelfUpdateNoOwnPath"] =
+                "이 프로그램 자신의 경로를 알아내지 못했다. 옛 설치 프로그램 파일은 그대로 남고, " +
+                "이 창은 임시 폴더에서 이어서 동작한다.",
+            ["SelfUpdateReplaceFailed"] =
+                "기존 설치 프로그램 파일을 바꾸지 못했다:\n{0}\n\n이유: {1}\n\n" +
+                "설치는 그대로 이어서 할 수 있다. 새 버전을 계속 쓰려면 " +
+                "최신 릴리스에서 FF14AccessibilityInstaller-KR.exe를 한 번 직접 받는다.",
+            ["SelfUpdateRestartFailed"] =
+                "설치 프로그램 파일은 업데이트했는데 자동으로 실행하지 못했다:\n{0}\n\n이유: {1}\n\n" +
+                "직접 실행한다.",
 
             ["KrCheckingProfile"] = "한국 서버 프로필을 확인한다 ...",
             ["KrProfileRoot"] = "프로필 루트: {0}  (정한 곳: {1})",
@@ -542,6 +589,10 @@ public static class Loc
             ["KrNoLocalBuild"] = "빌드된 플러그인이 없다.",
             ["KrBuildHint"] = "먼저 run\build.bat을 실행한다.",
             ["KrUsingLocalBuild"] = "로컬 빌드 {0}을 쓴다 ({1})",
+            ["KrUsingRelease"] = "릴리스 {0}을 쓴다",
+            ["KrReleaseUnreachable"] = "릴리스를 확인하지 못했다: {0}. 로컬 빌드로 이어서 한다.",
+            ["KrLocalBuildWins"] = "로컬 빌드 {0}이 릴리스 {1}보다 낮지 않다 - 로컬 빌드를 쓴다.",
+            ["KrReleaseDownloadFailed"] = "릴리스를 내려받지 못했다: {0}",
             ["KrErrorNoLocalBuild"] = "실패: 빌드된 플러그인이 없다.",
             ["KrBuildVersionUnreadable"] = "빌드된 매니페스트에서 버전을 읽지 못했다({0}). 폴더 이름이 버전이어야 해서 여기서 멈춘다.",
             ["KrInstalledAt"] = "설치한 곳: {0}",
@@ -551,6 +602,10 @@ public static class Loc
             ["KrDevInstallRemoved"] = "예전 개발용 설치를 걷어냈다.",
             ["KrDevInstallStuck"] = "예전 개발용 설치를 못 지웠다: {0} ({1}). 게임을 끄고 다시 실행한다. 그대로 두면 같은 모드가 두 번 적재된다.",
 
+            ["CheckingAccessibilityVersion"] = "접근성 모드 버전을 확인한다 ...",
+            ["NoAccessibilityAssetFound"] = "릴리스에 접근성 모드 압축이 없다.",
+            ["AccessibilityUpToDate"] = "접근성 모드 {0} - 이미 최신이다.",
+            ["DownloadingAccessibility"] = "접근성 모드 {0}을 내려받는다 ...",
             ["AccessibilityUpdated"] = "접근성 모드를 {0}으로 갱신했다.",
             ["AccessibilityInstalled"] = "접근성 모드 {0}을 설치했다.",
             ["UpdatedToShort"] = "{0}으로 갱신",
