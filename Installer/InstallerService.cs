@@ -41,8 +41,13 @@ public sealed partial class InstallerService
     private const string AccessibilityInternalName = "FF14Accessibility";
     private const string VnavmeshInternalName = "vnavmesh";
 
-    private const string AccessibilityRepoOwner = "derbruedi";
-    private const string AccessibilityRepoName = "ff14-accessibility";
+    // The Korean release channel, not the upstream one. Upstream releases carry
+    // the global build: it loads and then dies on the first gearset call, because
+    // ClientStructs 7.55 has a method the Korean 7.51 client does not (see
+    // overlay/patches/0001). Pointing the updater at derbruedi would hand the
+    // user exactly that binary, and nothing in the flow would call it an error.
+    private const string AccessibilityRepoOwner = "dnz3d4c";
+    private const string AccessibilityRepoName = "ff14-ko-accessibility";
     private const string VnavmeshRepositoryJsonUrl = "https://puni.sh/api/repository/veyn";
 
     // ── Wegdateien für die Kategorie "Dungeon" ─────────────────────────────
@@ -72,12 +77,9 @@ public sealed partial class InstallerService
     private const int DungeonPathsMaxEntryBytes = 2 * 1024 * 1024;
     private const long DungeonPathsMaxTotalBytes = 64L * 1024 * 1024;
 
-    // Selbst-Update: im KR-Build inaktiv (RunAsync ruft es nicht auf), weil es
-    // noch keinen Release-Kanal gibt. Der Apparat bleibt aber stehen - ihn zu
-    // loeschen macht jedes Rebase auf einen neuen Upstream-Stand teurer, und
-    // sobald ein Kanal existiert, ist es ein Einzeiler in RunAsync.
     private const string InstallerManifestAssetName = "installer.json";
-    private const string InstallerExeAssetName = "FF14AccessibilityInstaller.exe";
+    private const string InstallerExeAssetName = "FF14AccessibilityInstaller-KR.exe";
+    private const string AccessibilityZipAssetName = "FF14Accessibility.zip";
 
     // Korean build: the profile is XIVLauncherKR and nothing creates it for us.
     // See KrProfile for why each piece matters.
@@ -126,6 +128,14 @@ public sealed partial class InstallerService
     public bool SkipVnavmesh { get; set; }
 
     /// <summary>
+    /// Leaves out the installer's own update check. Set by --install, which
+    /// answers every question with yes: without this the automated check would
+    /// download the ~160 MB self-contained EXE on every run and then replace
+    /// the binary under test with whatever the release channel holds.
+    /// </summary>
+    public bool SkipSelfUpdate { get; set; }
+
+    /// <summary>
     /// The version folder of the installed copy, or null if there is none.
     /// Exists so --check and --install can report the result from outside the
     /// GUI: "the installer said it worked" and "the files are where Dalamud
@@ -158,9 +168,11 @@ public sealed partial class InstallerService
         Info(Loc.Get("InstallerHeader", ownVersion));
         Info(string.Empty);
 
-        // Kein Selbst-Update im KR-Build: es gibt (noch) keinen Release-Kanal,
-        // aus dem sich dieser Installer beziehen koennte. Der Aufruf bliebe sonst
-        // bei jedem Start an GitHub haengen und meldete nichts Brauchbares.
+        // The Korean release channel exists now (status.md D-1), so this runs
+        // again. It is the only path by which a user who already has the
+        // installer on disk ever gets a newer one.
+        if (!SkipSelfUpdate && await TrySelfUpdateAsync(ownVersion))
+            return true;
 
         try
         {
@@ -401,21 +413,27 @@ public sealed partial class InstallerService
     ///   - the DLL name MUST equal the plugin folder name.
     ///   - the manifest needs InstalledFromUrl (see <see cref="OfficialSource"/>).
     /// </summary>
-    private Task<string> UpdateAccessibilityPluginAsync(string ownVersion)
+    private async Task<string> UpdateAccessibilityPluginAsync(string ownVersion)
     {
-        Info(Loc.Get("KrLookingForLocalBuild"));
-
-        var zipPath = KrProfile.FindLocalBuild();
-        if (zipPath == null)
-        {
-            Warn(Loc.Get("KrNoLocalBuild"));
-            Info(Loc.Get("KrBuildHint"));
-            return Task.FromResult(Loc.Get("KrErrorNoLocalBuild"));
-        }
-
         var pluginRoot = Path.Combine(InstalledPluginsRoot, AccessibilityInternalName);
         var previous = FindInstalledManifest(pluginRoot);
         var wasInstalled = previous != null;
+
+        var source = await ChoosePluginSourceAsync(previous?.Version);
+        if (source.Kind == SourceKind.None)
+        {
+            Warn(Loc.Get("KrNoLocalBuild"));
+            Info(Loc.Get("KrBuildHint"));
+            return Loc.Get("KrErrorNoLocalBuild");
+        }
+        if (source.Kind == SourceKind.AlreadyNewest)
+        {
+            Info(Loc.Get("AccessibilityUpToDate", previous!.Version));
+            return Loc.Get("UpToDateShort", previous.Version);
+        }
+
+        var zipPath = source.ZipPath!;
+        var fromRelease = source.Kind == SourceKind.Release;
 
         string extractDir = Path.Combine(Path.GetTempPath(), "FF14AccExtract_" + Guid.NewGuid());
         try
@@ -429,10 +447,12 @@ public sealed partial class InstallerService
             if (builtVersion == null || !Version.TryParse(builtVersion, out _))
             {
                 Error(Loc.Get("KrBuildVersionUnreadable", builtVersion ?? Loc.Get("UnknownVersion")));
-                return Task.FromResult(Loc.Get("ErrorGeneric"));
+                return Loc.Get("ErrorGeneric");
             }
 
-            Info(Loc.Get("KrUsingLocalBuild", builtVersion, zipPath));
+            Info(fromRelease
+                ? Loc.Get("KrUsingRelease", builtVersion)
+                : Loc.Get("KrUsingLocalBuild", builtVersion, zipPath));
 
             var versionDir = Path.Combine(pluginRoot, builtVersion);
             // Old version folders are build output, and Dalamud loads the highest
@@ -448,24 +468,124 @@ public sealed partial class InstallerService
             Info(wasInstalled
                 ? Loc.Get("AccessibilityUpdated", builtVersion)
                 : Loc.Get("AccessibilityInstalled", builtVersion));
-            return Task.FromResult(wasInstalled
+            return wasInstalled
                 ? Loc.Get("UpdatedToShort", builtVersion)
-                : Loc.Get("NewlyInstalledShort", builtVersion));
+                : Loc.Get("NewlyInstalledShort", builtVersion);
         }
         catch (IOException ex)
         {
             Error(Loc.Get("CouldNotWritePluginFiles", ex.Message));
             Error(Loc.Get("CloseGameAndLauncher"));
-            return Task.FromResult(Loc.Get("ErrorFilesLocked"));
+            return Loc.Get("ErrorFilesLocked");
         }
         catch (Exception ex)
         {
             Error(Loc.Get("AccessibilityUnexpectedError", ex.Message));
-            return Task.FromResult(Loc.Get("ErrorGeneric"));
+            return Loc.Get("ErrorGeneric");
         }
         finally
         {
             TryDeleteDirectory(extractDir);
+            // Only ours to delete. A build sitting next to the installer belongs
+            // to whoever put it there.
+            if (fromRelease) TryDelete(zipPath);
+        }
+    }
+
+    private enum SourceKind { None, LocalBuild, Release, AlreadyNewest }
+
+    /// <summary>Where the copy about to be installed comes from. <see cref="ZipPath"/>
+    /// carries a file only for <see cref="SourceKind.LocalBuild"/> and
+    /// <see cref="SourceKind.Release"/>.</summary>
+    private sealed record PluginSource(SourceKind Kind, string? ZipPath = null);
+
+    /// <summary>
+    /// Decides which zip gets installed, and says which one out loud.
+    ///
+    /// Two sources exist: a build lying beside the installer - what a developer
+    /// has, and what the release folder carries so the first install works
+    /// without network - and the newest Korean release on GitHub.
+    ///
+    /// The local one does not simply win. Somebody who keeps the download folder
+    /// and runs the installer again months later would otherwise reinstall the
+    /// same old zip forever, and no line anywhere would say so. So both versions
+    /// are compared and the higher one is taken. Losing the network is not an
+    /// error here: the local build still installs.
+    /// </summary>
+    private async Task<PluginSource> ChoosePluginSourceAsync(string? installedVersion)
+    {
+        Info(Loc.Get("KrLookingForLocalBuild"));
+        var localZip = KrProfile.FindLocalBuild();
+        var localVersion = localZip == null ? null : ReadVersionFromZip(localZip);
+
+        (string tag, string url, string name)? asset = null;
+        try
+        {
+            Info(Loc.Get("CheckingAccessibilityVersion"));
+            var release = await GetLatestReleaseAsync(AccessibilityRepoOwner, AccessibilityRepoName);
+            asset = PickAsset(release, n =>
+                n.Equals(AccessibilityZipAssetName, StringComparison.OrdinalIgnoreCase));
+            if (asset == null) Warn(Loc.Get("NoAccessibilityAssetFound"));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or FormatException)
+        {
+            Warn(Loc.Get("KrReleaseUnreachable", ex.Message));
+        }
+
+        if (asset == null)
+            return localZip == null ? new PluginSource(SourceKind.None) : new PluginSource(SourceKind.LocalBuild, localZip);
+
+        var remoteVersion = asset.Value.tag.TrimStart('v', 'V');
+
+        // A local build that is not older wins: it is either the same thing the
+        // release holds, or something a developer just built and wants installed.
+        if (localVersion != null && !IsNewer(remoteVersion, localVersion))
+        {
+            Info(Loc.Get("KrLocalBuildWins", localVersion, remoteVersion));
+            return new PluginSource(SourceKind.LocalBuild, localZip);
+        }
+
+        if (localVersion == null && installedVersion != null && !IsNewer(remoteVersion, installedVersion))
+            return new PluginSource(SourceKind.AlreadyNewest);
+
+        var zipPath = Path.Combine(Path.GetTempPath(), "FF14Accessibility_" + Guid.NewGuid() + ".zip");
+        try
+        {
+            Info(Loc.Get("DownloadingAccessibility", remoteVersion));
+            await DownloadFileAsync(asset.Value.url, zipPath, AccessibilityInternalName);
+            return new PluginSource(SourceKind.Release, zipPath);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
+        {
+            Warn(Loc.Get("KrReleaseDownloadFailed", ex.Message));
+            TryDelete(zipPath);
+            return localZip == null ? new PluginSource(SourceKind.None) : new PluginSource(SourceKind.LocalBuild, localZip);
+        }
+    }
+
+    /// <summary>
+    /// Reads the plugin version out of a zip without unpacking it. The manifest
+    /// inside is the only trustworthy source - the file name carries no version
+    /// (the packer writes FF14Accessibility.zip), and the release tag is what we
+    /// are comparing against.
+    /// </summary>
+    private static string? ReadVersionFromZip(string zipPath)
+    {
+        try
+        {
+            using var archive = ZipFile.OpenRead(zipPath);
+            var entry = archive.GetEntry(AccessibilityInternalName + ".json");
+            if (entry == null) return null;
+
+            using var stream = entry.Open();
+            using var reader = new StreamReader(stream);
+            var node = JsonNode.Parse(reader.ReadToEnd());
+            var version = node?["AssemblyVersion"]?.GetValue<string>();
+            return string.IsNullOrWhiteSpace(version) ? null : version;
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or FormatException or JsonException)
+        {
+            return null;
         }
     }
 
