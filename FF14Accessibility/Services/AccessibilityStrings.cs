@@ -461,6 +461,19 @@ public static partial class AccessibilityStrings
         return category.Length > 0 ? $"{category}: {withLevel}" : withLevel;
     }
 
+    /// <summary>Position of the current category among the ones usable right now.
+    /// Korean only: the German side deliberately announces the name alone (see the
+    /// note above CategoryQuestCount), the Korean user asked for the position too.
+    ///
+    /// An index of 0 means the caller could not place the category. That drops the
+    /// position but still returns the full stop, because the Korean counts gave up
+    /// their own one to make room for this suffix - without it the line would end
+    /// mid-sentence and the screen reader would run it into whatever comes next.</summary>
+    public static string CategoryPositionSuffix(int index, int total) =>
+        !Loc.IsKorean ? string.Empty
+        : index > 0   ? $", {total} 중 {index}."
+                      : ".";
+
     // The word "Kategorie"/"Category" is deliberately NOT spoken in front of the
     // name (user 2026-08-04): the player just pressed the category key, so the
     // context is already clear - only the name carries information. The chat
