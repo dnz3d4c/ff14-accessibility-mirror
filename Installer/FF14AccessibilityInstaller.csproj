@@ -13,7 +13,12 @@
          nach Rueckfrage selbst (InstallerService.TrySelfUpdateAsync + SelfUpdate).
          MUSS beim Release mit dem Feld InstallerVersion in installer.json
          uebereinstimmen, sonst bietet der Installer das Update endlos erneut an. -->
-    <Version>1.2.0</Version>
+    <!-- KR fork: the FOURTH field is the Korean revision, same rule as the plugin
+         csproj. A SemVer suffix does NOT work here: only AssemblyVersion and
+         FileVersion reach the PE resource, and ParseVersionLoose returns null for
+         anything that is not up to four numeric fields - IsNewer then falls back
+         to a string compare and offers the same build forever. -->
+    <Version>1.2.0.0</Version>
     <AssemblyVersion>1.2.0.0</AssemblyVersion>
     <FileVersion>1.2.0.0</FileVersion>
     <!-- Barrierefreiheit: WinForms-GUI. Standardcontrols (Label, TextBox, Button)
