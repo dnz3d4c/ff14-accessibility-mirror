@@ -28,8 +28,6 @@ internal enum CompatSource
 /// - speech gets ONE line at startup, and only for paths whose answer can
 ///   differ from the game's. A Korean signature that found the game's own
 ///   function changes nothing for the user, so it stays in the log.
-/// - "/acc compat" says the full state on demand, so nothing has to be
-///   remembered from the startup announcement
 ///
 /// Strings live here rather than in AccessibilityStrings because this file is
 /// Korean-overlay only. Upstream rewrites that file constantly and every line we
@@ -75,31 +73,6 @@ internal static class CompatReport
             if (notes.Count == 0) return null;
             var prefix = Loc.Pick("Kompatibilitätshinweis: ", "Compatibility note: ", "호환성 안내: ");
             return prefix + string.Join(" ", notes);
-        }
-    }
-
-    /// <summary>Full state for "/acc compat" - always says something.</summary>
-    internal static string OnDemand
-    {
-        get
-        {
-            var visibility = NodeVisibilityCompat.Source switch
-            {
-                CompatSource.GameFunction => Loc.Pick("Spielfunktion",
-                                                      "the game's own function",
-                                                      "게임 기능"),
-                CompatSource.KoreanSignature => Loc.Pick("Spielfunktion über koreanische Signatur",
-                                                         "the game's own function via the Korean signature",
-                                                         "게임 기능(한국어판 시그니처로 찾음)"),
-                _ => Loc.Pick("im Mod nachgebildet", "emulated inside the mod", "모드가 대신 처리"),
-            };
-            var gearset = GearsetMarkCompat.AnswersByItemId
-                ? (Loc.Pick("nach Gegenstands-ID", "by item ID", "아이템 ID 기준"))
-                : (Loc.Pick("Spielfunktion", "the game's own function", "게임 기능"));
-
-            return Loc.Pick($"Sichtbarkeit: {visibility}. Ausrüstungsset-Markierung: {gearset}.",
-                            $"Visibility: {visibility}. Gearset marks: {gearset}.",
-                            $"화면 요소 표시 판정: {visibility}. 장비세트 표시 판정: {gearset}.");
         }
     }
 }
