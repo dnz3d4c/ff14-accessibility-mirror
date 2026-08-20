@@ -524,8 +524,8 @@ public sealed class Plugin : IDalamudPlugin
         // The compatibility note is written, not spoken. It names an internal
         // mechanism ("gearset marks go by item ID"), which is a sentence for a
         // log, not for the first thing a player hears at every login. What it
-        // guards against is still covered: the line below always runs, and
-        // "/acc compat" says the full state out loud on demand.
+        // guards against is still covered: the line below always runs, so the
+        // log keeps the full state.
         if (CompatReport.StartupNotice is { } notice)
             Log.Info($"[Compat] {notice}");
     }
@@ -538,7 +538,7 @@ public sealed class Plugin : IDalamudPlugin
         // /acc stop â†’ Sprache stoppen
         CommandManager.AddHandler("/acc", new CommandInfo(OnCommand)
         {
-            HelpMessage = "FF14 Accessibility: nav, set, near, keys, compat, stop, help"
+            HelpMessage = "FF14 Accessibility: nav, set, near, keys, stop, help"
         });
     }
 
@@ -611,13 +611,6 @@ public sealed class Plugin : IDalamudPlugin
                 break;
             case "keys":
                 _keybinds.DumpKeybinds(GetPluginKeys());
-                break;
-            // Which answers come from the game and which from the Korean
-            // compatibility layer - askable at any time, so the startup
-            // announcement does not have to be remembered.
-            case "compat":
-                Log.Info($"[Compat] {CompatReport.OnDemand}");
-                _tolk.SpeakInterrupt(CompatReport.OnDemand);
                 break;
             case "fish":
                 _fishing.AnnounceSpotsInCurrentZone();
