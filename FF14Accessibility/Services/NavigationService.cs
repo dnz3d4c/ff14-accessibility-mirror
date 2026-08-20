@@ -795,13 +795,25 @@ public sealed class NavigationService
         SelectedHuntTarget = null;
         SelectedDutyEntrance = null;
 
+        // Korean also gets "x of y" behind the count (0016). The denominator counts
+        // only the categories usable right now, because the guard above skips the
+        // unusable ones - counting all of them would make the position jump.
+        // IndexOf returns -1 when the current category is not in that list (the
+        // guard ran a full lap without finding an available one); +1 turns it into
+        // the 0 that CategoryPositionSuffix reads as "say nothing".
+        var usable = new List<int>();
+        for (var i = 0; i < n; i++)
+            if (IsCategoryAvailable(i)) usable.Add(i);
+        var suffix = AccessibilityStrings.CategoryPositionSuffix(usable.IndexOf(_categoryIndex) + 1, usable.Count);
+        void Announce(string text) => _tolk.SpeakInterrupt(text + suffix);
+
         if (IsQuestCategory || IsUnacceptedQuestCategory)
         {
             var label = CurrentCategoryLabel;
             var dests = GetQuestDestinations(IsUnacceptedQuestCategory);
             var here = dests.Count(d => d.InCurrentZone);
             var away = dests.Count - here;
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryQuestCount(label, here, away));
+            Announce(AccessibilityStrings.CategoryQuestCount(label, here, away));
             return;
         }
 
@@ -815,7 +827,7 @@ public sealed class NavigationService
             // Enemies exist only while a leve is actually running - see
             // GetLevequestEnemies; outside that this is 0 and stays unspoken.
             var enemies = _objectTable.LocalPlayer is { } p ? GetLevequestEnemies(p).Count : 0;
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryLevequestCount(givers, goals, enemies));
+            Announce(AccessibilityStrings.CategoryLevequestCount(givers, goals, enemies));
             return;
         }
 
@@ -823,21 +835,21 @@ public sealed class NavigationService
         {
             var places = _places.GetPlaces();
             var exits = places.Count(p => p.IsZoneTransition);
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryWaypointCount(places.Count, exits));
+            Announce(AccessibilityStrings.CategoryWaypointCount(places.Count, exits));
             return;
         }
 
         if (IsAetheryteCategory)
         {
             var aetherytes = _places.GetPlaces().Count(IsAetherytePlace);
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryAetheryteCount(aetherytes));
+            Announce(AccessibilityStrings.CategoryAetheryteCount(aetherytes));
             return;
         }
 
         if (IsFishingCategory)
         {
             var spots = _fishing.GetSpotsInCurrentZone().Count;
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryFishingCount(spots));
+            Announce(AccessibilityStrings.CategoryFishingCount(spots));
             return;
         }
 
@@ -845,7 +857,7 @@ public sealed class NavigationService
         {
             var fates = _fates.GetActiveFates();
             var preparing = fates.Count(f => f.IsPreparing);
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryFateCount(fates.Count - preparing, preparing));
+            Announce(AccessibilityStrings.CategoryFateCount(fates.Count - preparing, preparing));
             return;
         }
 
@@ -853,7 +865,7 @@ public sealed class NavigationService
         {
             var targets = _huntingLog.GetOpenTargets();
             var here = targets.Count(t => t.InCurrentZone);
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryHuntingCount(targets.Count, here));
+            Announce(AccessibilityStrings.CategoryHuntingCount(targets.Count, here));
             return;
         }
 
@@ -887,12 +899,12 @@ public sealed class NavigationService
         if (IsDeepRoomCategory)
         {
             var rooms = DeepDungeon?.RoomRows(_objectTable.LocalPlayer?.EntityId ?? 0).Count ?? 0;
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryObjectCount(CurrentCategoryLabel, rooms));
+            Announce(AccessibilityStrings.CategoryObjectCount(CurrentCategoryLabel, rooms));
             return;
         }
 
         var count = GetCategoryObjects().Count;
-        _tolk.SpeakInterrupt(AccessibilityStrings.CategoryObjectCount(CurrentCategoryLabel, count));
+        Announce(AccessibilityStrings.CategoryObjectCount(CurrentCategoryLabel, count));
     }
 
     /// <summary>
