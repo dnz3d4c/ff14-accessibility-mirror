@@ -92,7 +92,11 @@ internal static class KrCheck
         Line("devPlugins", KrProfile.DevPluginsRoot, Directory.Exists(KrProfile.DevPluginsRoot));
         Line("installedPlugins", KrProfile.InstalledPluginsRoot, Directory.Exists(KrProfile.InstalledPluginsRoot));
         Line("dalamudConfig.json", KrProfile.ConfigPath, File.Exists(KrProfile.ConfigPath));
-        Line("dalamud hooks", Path.Combine(KrProfile.Root, "addon", "Hooks"), KrProfile.DalamudInstalled);
+        // The path shown is the missing piece when there is one, because that is
+        // the question being asked here - "not ready" without saying which half
+        // is absent sends the reader back to guessing.
+        var missing = KrProfile.DalamudMissingPiece();
+        Line("dalamud ready", missing ?? KrProfile.KrPatchedHookFolder()!, missing is null);
         Line("kr updater", KrProfile.UpdaterPath, File.Exists(KrProfile.UpdaterPath));
 
         var runtime = Environment.GetEnvironmentVariable("DALAMUD_RUNTIME", EnvironmentVariableTarget.User);
