@@ -283,8 +283,76 @@ internal static class KrProfile
                 "\"$values\":[]}," +
             "\"id\":\"00000000-0000-0000-0000-000000000000\",\"n\":\"DEFAULT\"}}";
 
-    /// <summary>True once the updater has produced a hook folder, i.e. Dalamud is present.</summary>
-    public static bool DalamudInstalled => Directory.Exists(Path.Combine(Root, "addon", "Hooks"));
+    /// <summary>
+    /// The KR patch markers the updater writes into the hook folder.
+    ///
+    /// A pattern, not the three names actually observed (Signature,
+    /// Compatibility, Language): that observation is a single updater version
+    /// against a single Dalamud version, so pinning names or a count would turn
+    /// the next updater release into a permanent 15-minute timeout - and this
+    /// check fails towards blocking the user, not towards letting them through.
+    /// </summary>
+    private const string KrPatchMarker = "Dalamud.KR.*.Patch.json";
+
+    /// <summary>
+    /// The asset manifest, written last of everything the updater produces
+    /// (measured 2026-08-20: runtime at 07:57:39, this file at 07:57:46). Its
+    /// presence is what separates "the run finished" from "the run started".
+    /// </summary>
+    public static string AssetVersionPath => Path.Combine(Root, "dalamudAssets", "asset.ver");
+
+    /// <summary>
+    /// A hook folder carrying the KR patch markers, or null if there is none.
+    /// The folder name is the Dalamud version and changes on every update, so it
+    /// is searched for rather than known.
+    /// </summary>
+    internal static string? KrPatchedHookFolder()
+    {
+        try
+        {
+            var hooks = Path.Combine(Root, "addon", "Hooks");
+            if (!Directory.Exists(hooks)) return null;
+
+            foreach (var version in Directory.EnumerateDirectories(hooks))
+            {
+                if (Directory.EnumerateFiles(version, KrPatchMarker).Any()) return version;
+            }
+        }
+        catch (Exception)
+        {
+            // This runs in a loop while the updater is writing into the same
+            // tree, so a folder can vanish mid-enumeration. Not being able to
+            // look right now is "not ready yet", and the next pass looks again.
+            return null;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// What the profile still lacks before Dalamud counts as ready, or null when
+    /// it lacks nothing.
+    ///
+    /// Existence of addon\Hooks used to be the whole test, and it is true too
+    /// early: on 2026-08-20 the installer deployed its plugin at 07:57:41 while
+    /// the updater was still writing the runtime, and the assets only landed at
+    /// 07:57:46. An empty folder and a leftover from an older install passed it
+    /// as well.
+    ///
+    /// Returns the missing path rather than a bool because the failure mode is a
+    /// silent 15-minute wait - without this, "it timed out" carries no clue as to
+    /// which half never arrived.
+    /// </summary>
+    public static string? DalamudMissingPiece()
+    {
+        if (KrPatchedHookFolder() is null)
+            return Path.Combine(Root, "addon", "Hooks", "*", KrPatchMarker);
+        if (!File.Exists(AssetVersionPath))
+            return AssetVersionPath;
+        return null;
+    }
+
+    /// <summary>True once the updater has finished putting Dalamud into the profile.</summary>
+    public static bool DalamudInstalled => DalamudMissingPiece() is null;
 
     /// <summary>
     /// Creates the pieces the Korean launcher never creates. Idempotent - every
