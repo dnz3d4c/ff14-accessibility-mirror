@@ -28,8 +28,6 @@ internal enum CompatSource
 /// - speech gets ONE line at startup, and only for paths whose answer can
 ///   differ from the game's. A Korean signature that found the game's own
 ///   function changes nothing for the user, so it stays in the log.
-/// - "/acc compat" says the full state on demand, so nothing has to be
-///   remembered from the startup announcement
 ///
 /// Strings live here rather than in AccessibilityStrings because this file is
 /// Korean-overlay only. Upstream rewrites that file constantly and every line we
@@ -75,29 +73,6 @@ internal static class CompatReport
             if (notes.Count == 0) return null;
             var prefix = Loc.IsGerman ? "Kompatibilitätshinweis: " : "Compatibility note: ";
             return prefix + string.Join(" ", notes);
-        }
-    }
-
-    /// <summary>Full state for "/acc compat" - always says something.</summary>
-    internal static string OnDemand
-    {
-        get
-        {
-            var visibility = NodeVisibilityCompat.Source switch
-            {
-                CompatSource.GameFunction => Loc.IsGerman ? "Spielfunktion" : "the game's own function",
-                CompatSource.KoreanSignature => Loc.IsGerman
-                    ? "Spielfunktion über koreanische Signatur"
-                    : "the game's own function via the Korean signature",
-                _ => Loc.IsGerman ? "im Mod nachgebildet" : "emulated inside the mod",
-            };
-            var gearset = GearsetMarkCompat.AnswersByItemId
-                ? (Loc.IsGerman ? "nach Gegenstands-ID" : "by item ID")
-                : (Loc.IsGerman ? "Spielfunktion" : "the game's own function");
-
-            return Loc.IsGerman
-                ? $"Sichtbarkeit: {visibility}. Ausrüstungsset-Markierung: {gearset}."
-                : $"Visibility: {visibility}. Gearset marks: {gearset}.";
         }
     }
 }
