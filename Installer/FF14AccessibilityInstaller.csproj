@@ -13,9 +13,14 @@
          nach Rueckfrage selbst (InstallerService.TrySelfUpdateAsync + SelfUpdate).
          MUSS beim Release mit dem Feld InstallerVersion in installer.json
          uebereinstimmen, sonst bietet der Installer das Update endlos erneut an. -->
-    <Version>1.1.1-kr.1</Version>
-    <AssemblyVersion>1.1.1.0</AssemblyVersion>
-    <FileVersion>1.1.1.0</FileVersion>
+    <!-- KR fork: the FOURTH field is the Korean revision, same rule as the plugin
+         csproj. A SemVer suffix does NOT work here: only AssemblyVersion and
+         FileVersion reach the PE resource, and ParseVersionLoose returns null for
+         anything that is not up to four numeric fields - IsNewer then falls back
+         to a string compare and offers the same build forever. -->
+    <Version>1.1.1.1</Version>
+    <AssemblyVersion>1.1.1.1</AssemblyVersion>
+    <FileVersion>1.1.1.1</FileVersion>
     <!-- Barrierefreiheit: WinForms-GUI. Standardcontrols (Label, TextBox, Button)
          setzen automatisch die klassischen Win32/UIA-Properties, NVDA/JAWS lesen
          sie ohne Zusatzaufwand vor. Status-Updates gehen zusaetzlich in ein
