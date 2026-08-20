@@ -26,10 +26,10 @@ public static partial class AccessibilityStrings
                                                  "도움말 없음");
     public static string HelpForTitle => Pick("Enter öffnet das Hauptmenü. Strg+F1 sagt diese Hilfe erneut an.",
                                               "Press Enter to open the main menu. Press Ctrl+F1 to hear this help again.",
-                                              "엔터를 누르면 주 메뉴가 열린다. 컨트롤 F1로 이 도움말을 다시 듣는다.");
+                                              "엔터는 주 메뉴 열기, 컨트롤 F1은 도움말 다시 듣기.");
     public static string HelpForTitleMenu => Pick("Pfeil hoch und runter zum Wechseln, Enter zum Bestätigen, Escape zurück, Strg+F1 für Hilfe.",
                                                   "Use up and down arrow keys to move, Enter to confirm, Escape to go back, Ctrl+F1 for help.",
-                                                  "위아래 화살표로 항목 사이를 옮겨 다니고, 엔터로 확인하고, 이스케이프로 돌아간다. 컨트롤 F1은 도움말.");
+                                                  "위아래 화살표는 항목 이동, 엔터는 확인, 이스케이프는 뒤로, 컨트롤 F1은 도움말.");
 
     public static string Confirmed(string item) =>
         Pick($"Auswahl bestätigt: {item}", $"Confirmed: {item}", $"선택함: {item}");
@@ -145,7 +145,7 @@ public static partial class AccessibilityStrings
 
     public static string HelpForConfigSystem => Pick("Pfeile hoch und runter wechseln Option. Links und rechts ändern Wert oder Tab. Enter speichert, Escape verwirft, Strg+F1 für Hilfe.",
                                                      "Up and down arrows move between options. Left and right change value or tab. Enter saves, Escape discards, Ctrl+F1 for help.",
-                                                     "위아래 화살표로 다른 항목으로 옮겨 간다. 좌우 화살표로 값이나 탭을 바꾼다. 엔터는 저장, 이스케이프는 취소, 컨트롤 F1은 도움말.");
+                                                     "위아래 화살표는 항목 이동, 좌우 화살표는 값이나 탭 변경, 엔터는 저장, 이스케이프는 취소, 컨트롤 F1은 도움말.");
 
     public static string CheckboxOn  => Pick("an", "on", "켜짐");
     public static string CheckboxOff => Pick("aus", "off", "꺼짐");
@@ -221,12 +221,12 @@ public static partial class AccessibilityStrings
     public static string ActiveWindow(string name, int visibleCount) =>
         Pick($"Aktives Fenster: {name}. {visibleCount} Fenster sichtbar, Liste im Log.",
              $"Active window: {name}. {visibleCount} windows visible, list written to log.",
-             $"초점 창: {name}. 보이는 창 {visibleCount}개, 전체 목록은 로그에 적힘.");
+             $"초점 받은 창: {name}. 보이는 창 {visibleCount}개, 전체 목록은 로그에 적힘.");
 
     public static string NoWindowFocused(int visibleCount) =>
         Pick($"Kein Fenster fokussiert. {visibleCount} Fenster sichtbar, Liste im Log.",
              $"No window focused. {visibleCount} windows visible, list written to log.",
-             $"초점이 놓인 창 없음. 보이는 창 {visibleCount}개, 전체 목록은 로그에 적힘.");
+             $"초점 받은 창 없음. 보이는 창 {visibleCount}개, 전체 목록은 로그에 적힘.");
 
     public static string UiManagerUnavailable =>
         Pick("Fenster-Liste nicht verfügbar.", "Window list not available.", "창 목록을 가져올 수 없음.");
@@ -257,7 +257,7 @@ public static partial class AccessibilityStrings
     public static string DialogButtons(string confirm, string cancel) =>
         Pick($"{confirm} oder {cancel}? Links und rechts wechseln, Enter wählt aus.",
              $"{confirm} or {cancel}? Left and right to switch, Enter to select.",
-             $"{confirm} 또는 {cancel}? 좌우 방향키로 고르고 엔터로 확정한다.");
+             $"{confirm} 또는 {cancel}? 좌우 방향키는 선택, 엔터는 확정.");
 
     // ── Navigation: Himmelsrichtungen, relative Richtung, Distanz ─────
     // Sprachabhängige Kompass-Wörter (0 = Norden .. 7 = Nordwesten). Property,
@@ -410,34 +410,34 @@ public static partial class AccessibilityStrings
         away > 0
             ? (Pick($"{label}: {here} im Gebiet, {away} in anderen Gebieten.",
                     $"{label}: {here} in this area, {away} in other areas.",
-                    $"이 지역에 {label} {here}, 다른 지역에 {away}."))
+                    $"{label}, 이 지역 {here}, 다른 지역 {away}"))
             : (Pick($"{label}: {here} im Gebiet.",
                     $"{label}: {here} in this area.",
-                    $"이 지역에 {label} {here}."));
+                    $"{label}, 이 지역 {here}"));
 
     public static string CategoryWaypointCount(int count, int exits) =>
         exits > 0
             ? (Pick($"Wegpunkte: {count} im Gebiet, davon {exits} Übergänge.",
                     $"Waypoints: {count} in this area, {exits} of them exits.",
-                    $"이 지역에 경유지 {count}곳, 그중 다른 지역으로 넘어가는 통로 {exits}곳."))
+                    $"경유지, 이 지역 {count}곳, 그중 다른 지역으로 넘어가는 통로 {exits}곳"))
             : (Pick($"Wegpunkte: {count} im Gebiet.",
                     $"Waypoints: {count} in this area.",
-                    $"이 지역에 경유지 {count}곳."));
+                    $"경유지, 이 지역 {count}곳"));
 
     public static string CategoryAetheryteCount(int count) =>
         Pick($"Ätheryten: {count} im Gebiet.",
              $"Aetherytes: {count} in this area.",
-             $"이 지역에 에테라이트 {count}곳.");
+             $"에테라이트, 이 지역 {count}곳");
 
     // ── FATEs: aktive Welt-Ereignisse der Zone ──
     public static string CategoryFateCount(int active, int preparing) =>
         preparing > 0
             ? (Pick($"FATEs: {active} aktiv, {preparing} starten gleich.",
                     $"FATEs: {active} active, {preparing} starting soon.",
-                    $"돌발 임무: 이 지역에 진행 중 {active}개, 곧 시작 {preparing}개."))
+                    $"돌발 임무, 이 지역 진행 중 {active}개, 곧 시작 {preparing}개"))
             : (Pick($"FATEs: {active} aktiv.",
                     $"FATEs: {active} active.",
-                    $"돌발 임무: 이 지역에 진행 중 {active}개."));
+                    $"돌발 임무, 이 지역 진행 중 {active}개"));
 
     /// <summary>One FATE line: name, level, then either the completion percent or,
     /// for a not-yet-started FATE, a "starting soon" note.</summary>
@@ -455,10 +455,10 @@ public static partial class AccessibilityStrings
         here > 0
             ? (Pick($"Jagdziele: {total} offen, {here} in diesem Gebiet.",
                     $"Hunting targets: {total} open, {here} in this area.",
-                    $"토벌 대상: 남은 것 {total}종, 그중 이 지역에 {here}종."))
+                    $"토벌 대상, 남은 것 {total}종, 그중 이 지역 {here}종"))
             : (Pick($"Jagdziele: {total} offen, keines in diesem Gebiet.",
                     $"Hunting targets: {total} open, none in this area.",
-                    $"토벌 대상: 남은 것 {total}종. 이 지역에는 없음."));
+                    $"토벌 대상, 남은 것 {total}종, 이 지역 없음"));
 
     /// <summary>One hunting log line: the monster and how many kills are still missing.</summary>
     public static string HuntingTargetEntry(string monster, int killed, int required) =>
@@ -500,7 +500,7 @@ public static partial class AccessibilityStrings
     public static string CategoryLevequestCount(int givers, int goals) =>
         Pick($"Freibriefe: {givers} Geber, {goals} Ziele.",
              $"Levequests: {givers} givers, {goals} goals.",
-             $"길드 의뢰: 의뢰인 {givers}명, 목표 지점 {goals}곳.");
+             $"길드 의뢰, 의뢰인 {givers}명, 목표 지점 {goals}곳");
 
     /// <summary>Spoken role prefix so the player knows whether a leve destination
     /// is the Levemete (accept/hand in) or the objective (do the task).</summary>
@@ -514,7 +514,7 @@ public static partial class AccessibilityStrings
     public static string NoLevequests =>
         Pick("Keine Freibriefe. Erst bei einem Freibrief-Geber annehmen.",
              "No levequests. Accept one from a levemete first.",
-             "길드 의뢰 없음. 먼저 의뢰인에게서 받는다.");
+             "길드 의뢰 없음. 먼저 의뢰인에게서 수령 필요.");
 
     // Fishing spots (Angelplätze). Type label used when the spot flows through
     // the shared PlaceDestination path; entry adds the required fishing level.
@@ -526,7 +526,7 @@ public static partial class AccessibilityStrings
     public static string CategoryFishingCount(int count) =>
         Pick($"Angelplätze: {count} im Gebiet.",
              $"Fishing spots: {count} in this area.",
-             $"이 지역에 낚시터 {count}곳.");
+             $"낚시터, 이 지역 {count}곳");
 
     public static string NoFishingSpots =>
         Pick("Keine Angelplätze in diesem Gebiet.",
@@ -544,7 +544,7 @@ public static partial class AccessibilityStrings
         Pick("Biss!", "Bite!", "입질.");
 
     public static string CategoryObjectCount(string label, int count) =>
-        Pick($"{label}: {count} in der Nähe.", $"{label}: {count} nearby.", $"근처에 {label} {count}.");
+        Pick($"{label}: {count} in der Nähe.", $"{label}: {count} nearby.", $"{label}, 근처 {count}");
 
     public static string NoObjectsInRange(string label, float range) =>
         Pick($"Keine {label} in {range:F0} Metern.",
@@ -612,12 +612,12 @@ public static partial class AccessibilityStrings
     /// names Page Down (KeyNextObject default) now, not the old N.</summary>
     public static string NoTargetSelectN => Pick("Kein Ziel. Erst mit Bild ab ein Objekt wählen.",
                                                  "No target. Select an object with Page Down first.",
-                                                 "대상 없음. 먼저 페이지 다운으로 사물을 고른다.");
+                                                 "대상 없음. 먼저 페이지 다운으로 사물 선택 필요.");
 
     /// <summary>"No target set. Select an object with Page Down first." (direction key).</summary>
     public static string NoTargetTracked => Pick("Kein Ziel gesetzt. Erst mit Bild ab ein Objekt wählen.",
                                                  "No target set. Select an object with Page Down first.",
-                                                 "대상이 정해지지 않음. 먼저 페이지 다운으로 사물을 고른다.");
+                                                 "대상이 정해지지 않음. 먼저 페이지 다운으로 사물 선택 필요.");
 
     /// <summary>Type name for an object kind, spoken after the object name.</summary>
     public static string ObjectKindName(ObjectKind kind) => kind switch
@@ -709,7 +709,7 @@ public static partial class AccessibilityStrings
                                                     "근처에 받을 수 있는 퀘스트 없음.");
     public static string NoQuestGoals       => Pick("Keine Quest-Ziele. Erst eine Quest annehmen.",
                                                     "No quest goals. Accept a quest first.",
-                                                    "퀘스트 목표 없음. 먼저 퀘스트를 받는다.");
+                                                    "퀘스트 목표 없음. 먼저 퀘스트 수령 필요.");
     public static string StoryPrefix        => Pick("Story: ", "Story: ", "스토리: ");
 
     /// <summary>
@@ -741,7 +741,7 @@ public static partial class AccessibilityStrings
                                                      "다른 지역.");
     public static string NumpadWalksToTransition => Pick(" Nummernblock 3 läuft zum Übergang.",
                                                          " Numpad 3 walks to the transition.",
-                                                         " 숫자패드 3을 누르면 통로로 간다.");
+                                                         " 숫자패드 3은 통로로 이동.");
 
     /// <summary>The "get there via &lt;transition&gt;" clause of a cross-zone quest
     /// announcement, including the count of remaining transitions.</summary>
@@ -876,10 +876,10 @@ public static partial class AccessibilityStrings
              $" 페이지 {total} 중 {current}.");
     public static string EnterCloses    => Pick(" Enter schließt.",
                                                 " Press Enter to close.",
-                                                " 엔터로 닫는다.");
+                                                " 엔터는 닫기.");
     public static string EnterPagesOn   => Pick(" Enter blättert weiter.",
                                                 " Press Enter to continue.",
-                                                " 엔터를 누르면 다음 쪽으로 넘어간다.");
+                                                " 엔터는 페이지 넘기기.");
     public static string Closed         => Pick("Geschlossen.", "Closed.", "닫힘.");
     public static string CloseButtonNotResponding => Pick("Schließen-Knopf reagiert nicht.",
                                                           "Close button not responding.",
@@ -918,7 +918,7 @@ public static partial class AccessibilityStrings
     // "Hand Over" is the EN client's button; verify against an EN dump in Teil 2.
     public static string DeliveryOpen => Pick("Gegenstand abliefern. Drücke Strg F3 für die passenden Gegenstände, dann auswählen und Übergeben.",
                                               "Hand over item. Press Ctrl F3 for the matching items, then select and Hand Over.",
-                                              "아이템 건네주기. 컨트롤 F3을 누르면 맞는 아이템이 나온다. 고른 다음 건네주기를 누른다.");
+                                              "아이템 건네주기. 컨트롤 F3은 맞는 아이템 찾기, 고른 다음 건네주기 누르기.");
     public static string DeliveryItems(IReadOnlyList<string> items) => items.Count switch
     {
         0 => Pick("Keine passenden Gegenstände im Beutel gefunden.",
@@ -976,7 +976,7 @@ public static partial class AccessibilityStrings
                                                   "데이터 센터 선택.");
     public static string GamepadCalibration => Pick("Gamepad-Kalibrierung. Escape zum Schließen.",
                                                     "Gamepad calibration. Press Escape to close.",
-                                                    "게임패드 보정. 이스케이프로 닫는다.");
+                                                    "게임패드 보정. 이스케이프는 닫기.");
     public static string ExerciseStarted => Pick("Übung gestartet.", "Exercise started.", "훈련 시작됨.");
     public static string BeginButtonNotResponding => Pick("Beginnen-Knopf reagiert nicht.",
                                                           "Begin button not responding.",
@@ -1053,7 +1053,7 @@ public static partial class AccessibilityStrings
     public static string FaceNoRoute =>
         Pick("Kein Weg aktiv. Erst ein Ziel wählen.",
              "No route active. Pick a destination first.",
-             "진행 중인 경로 없음. 먼저 목적지를 고른다.");
+             "진행 중인 경로 없음. 먼저 목적지 설정 필요.");
 
     /// <summary>Guide point and player are on the same spot - no direction to turn to.</summary>
     public static string FaceAlreadyThere =>
@@ -1168,7 +1168,7 @@ public static partial class AccessibilityStrings
         Pick($". Übung: {exercise}", $". Exercise: {exercise}", $". 훈련: {exercise}");
     public static string ArenaEnterBegins => Pick(". Enter beginnt.",
                                                   ". Press Enter to begin.",
-                                                  ". 엔터로 시작한다.");
+                                                  ". 엔터는 시작.");
 
     // ── Benachrichtigung aktivieren ──────────────────────────────────
     public static string Activating(string text) => Pick($"Aktiviere: {text}",
@@ -1493,7 +1493,7 @@ public static partial class AccessibilityStrings
     public static string NoCoordsInClipboard =>
         Pick("Keine Koordinaten in der Zwischenablage gefunden. Erst die Zahlen kopieren, dann die Taste drücken.",
              "No coordinates found on the clipboard. Copy the numbers first, then press the key.",
-             "클립보드에 좌표가 없음. 먼저 숫자를 복사한 다음 키를 누른다.");
+             "클립보드에 좌표가 없음. 먼저 숫자 복사 필요.");
     public static string MapUnknownConvert =>
         Pick("Aktuelle Karte unbekannt, kann nicht umrechnen.",
              "Current map unknown, cannot convert.",
@@ -1696,7 +1696,7 @@ public static partial class AccessibilityStrings
     public static string FollowNoTarget =>
         Pick("Kein Ziel zum Folgen. Erst ein Ziel anwählen.",
              "No target to follow. Select a target first.",
-             "따라갈 대상 없음. 먼저 대상을 지정한다.");
+             "따라갈 대상 없음. 먼저 대상 지정 필요.");
     public static string FollowSelf =>
         Pick("Das bist du selbst.", "That is you.", "대상이 나 자신이라 따라갈 수 없음.");
     public static string Following(string name) =>
@@ -1731,15 +1731,15 @@ public static partial class AccessibilityStrings
     public static string MeshStillLoading(float percent) =>
         Pick($"Wegenetz lädt noch, {percent:F0} Prozent. Gleich nochmal versuchen.",
              $"Navmesh still loading, {percent:F0} percent. Try again shortly.",
-             $"길 정보 불러오는 중, {percent:F0} 퍼센트. 잠시 뒤 다시 해라.");
+             $"길 정보 불러오는 중, {percent:F0} 퍼센트. 잠시 뒤 다시 시도 필요.");
     public static string MeshNotReady =>
         Pick("Wegenetz ist noch nicht bereit. Gleich nochmal versuchen.",
              "Navmesh is not ready yet. Try again shortly.",
-             "길 정보가 아직 준비 안 됨. 잠시 뒤 다시 해라.");
+             "길 정보가 아직 준비 안 됨. 잠시 뒤 다시 시도 필요.");
     public static string PathfindBusy =>
         Pick("Wegfindung läuft schon. Gleich nochmal versuchen.",
              "Pathfinding is already running. Try again shortly.",
-             "경로 찾기가 이미 진행 중. 잠시 뒤 다시 해라.");
+             "경로 찾기가 이미 진행 중. 잠시 뒤 다시 시도 필요.");
     public static string AutoWalkUnavailable =>
         Pick("Auto-Lauf nicht verfügbar. Das Plugin vnavmesh fehlt oder ist nicht geladen.",
              "Auto-walk not available. The vnavmesh plugin is missing or not loaded.",
@@ -1946,11 +1946,11 @@ public static partial class AccessibilityStrings
     public static string NoSkillSelected =>
         Pick("Kein Skill gewählt. Erst mit dem Skill-Browser blättern.",
              "No skill selected. Browse with the skill browser first.",
-             "고른 기술 없음. 먼저 기술 목록에서 고른다.");
+             "고른 기술 없음. 먼저 기술 목록에서 선택 필요.");
     public static string NoTargetSlot =>
         Pick("Keine Ziel-Taste gewählt. Erst die Ziel-Taste wählen.",
              "No target slot selected. Select the target slot first.",
-             "배정할 키를 안 골랐음. 먼저 배정할 키를 고른다.");
+             "배정할 키를 안 골랐음. 먼저 배정할 키 선택 필요.");
     public static string AssignFailed =>
         Pick("Belegen fehlgeschlagen.", "Assignment failed.", "단축바에 올리지 못했음.");
     public static string SkillAssigned(string name, string slotLabel) =>
@@ -1997,26 +1997,26 @@ public static partial class AccessibilityStrings
     public static string SkillMenuOpened(int count) =>
         Pick($"Skill-Zuweisung, {count} Skills. Nummernblock 8 und 2 blättern, 4 oder 6 wechselt die Liste, Nummernblock 0 wählt, Nummernblock Komma zurück.",
              $"Skill assignment, {count} skills. Numpad 8 and 2 to browse, 4 or 6 switches the list, Numpad 0 selects, Numpad decimal to go back.",
-             $"기술 배정, 기술 {count}개. 숫자패드 8과 2로 넘기고, 4 또는 6으로 목록을 바꾸고, 숫자패드 0으로 고르고, 숫자패드 마침표로 돌아간다.");
+             $"기술 배정, 기술 {count}개. 숫자패드 8과 2는 항목 이동, 4와 6은 목록 전환, 0은 선택, 마침표는 뒤로.");
 
     /// <summary>Spoken when the menu switches to the carried-item list.</summary>
     public static string ItemMenuOpened(int count) =>
         Pick($"Gegenstände, {count} Einträge. Nummernblock 8 und 2 blättern, 4 oder 6 wechselt die Liste, Nummernblock 0 wählt, Nummernblock Komma zurück.",
              $"Items, {count} entries. Numpad 8 and 2 to browse, 4 or 6 switches the list, Numpad 0 selects, Numpad decimal to go back.",
-             $"아이템, 항목 {count}개. 숫자패드 8과 2로 넘기고, 4 또는 6으로 목록을 바꾸고, 숫자패드 0으로 고르고, 숫자패드 마침표로 돌아간다.");
+             $"아이템, 항목 {count}개. 숫자패드 8과 2는 항목 이동, 4와 6은 목록 전환, 0은 선택, 마침표는 뒤로.");
 
     /// <summary>Spoken when the menu switches to the general-action list
     /// (Absteigen, Reittier-Roulette, Sprint, Teleport ...).</summary>
     public static string GeneralActionMenuOpened(int count) =>
         Pick($"Allgemeine Aktionen, {count} Einträge. Nummernblock 8 und 2 blättern, 4 oder 6 wechselt die Liste, Nummernblock 0 wählt, Nummernblock Komma zurück.",
              $"General actions, {count} entries. Numpad 8 and 2 to browse, 4 or 6 switches the list, Numpad 0 selects, Numpad decimal to go back.",
-             $"일반 기술, 항목 {count}개. 숫자패드 8과 2로 넘기고, 4 또는 6으로 목록을 바꾸고, 숫자패드 0으로 고르고, 숫자패드 마침표로 돌아간다.");
+             $"일반 기술, 항목 {count}개. 숫자패드 8과 2는 항목 이동, 4와 6은 목록 전환, 0은 선택, 마침표는 뒤로.");
 
     /// <summary>Spoken when the menu switches to the mount list.</summary>
     public static string MountMenuOpened(int count) =>
         Pick($"Reittiere, {count} Einträge. Nummernblock 8 und 2 blättern, 4 oder 6 wechselt die Liste, Nummernblock 0 wählt, Nummernblock Komma zurück.",
              $"Mounts, {count} entries. Numpad 8 and 2 to browse, 4 or 6 switches the list, Numpad 0 selects, Numpad decimal to go back.",
-             $"탈것, 항목 {count}개. 숫자패드 8과 2로 넘기고, 4 또는 6으로 목록을 바꾸고, 숫자패드 0으로 고르고, 숫자패드 마침표로 돌아간다.");
+             $"탈것, 항목 {count}개. 숫자패드 8과 2는 항목 이동, 4와 6은 목록 전환, 0은 선택, 마침표는 뒤로.");
 
     /// <summary>One browsed entry that has nothing but a name: general actions
     /// and mounts. Same shape as the other browse entries so the menu sounds
@@ -2031,7 +2031,7 @@ public static partial class AccessibilityStrings
     public static string QuestItemMenuOpened(int count) =>
         Pick($"Quest-Gegenstände, {count} Einträge. Nummernblock 8 und 2 blättern, 4 oder 6 wechselt die Liste, Nummernblock 0 wählt, Nummernblock Komma zurück.",
              $"Quest items, {count} entries. Numpad 8 and 2 to browse, 4 or 6 switches the list, Numpad 0 selects, Numpad decimal to go back.",
-             $"퀘스트 아이템, 항목 {count}개. 숫자패드 8과 2로 넘기고, 4 또는 6으로 목록을 바꾸고, 숫자패드 0으로 고르고, 숫자패드 마침표로 돌아간다.");
+             $"퀘스트 아이템, 항목 {count}개. 숫자패드 8과 2는 항목 이동, 4와 6은 목록 전환, 0은 선택, 마침표는 뒤로.");
 
     /// <summary>One browsed quest item: name, how many are left, its cast time
     /// and where it already sits. The cast time matters in a fight - three
@@ -2052,7 +2052,7 @@ public static partial class AccessibilityStrings
     public static string QuestItemReceived(string joined) =>
         Pick($"Quest-Gegenstand zum Benutzen: {joined}. Mit Strg und Nummernblock 0 auf die Leiste legen.",
              $"Usable quest item: {joined}. Put it on a bar with Ctrl and Numpad 0.",
-             $"쓸 수 있는 퀘스트 아이템: {joined}. 컨트롤과 숫자패드 0으로 단축바에 올린다.");
+             $"쓸 수 있는 퀘스트 아이템: {joined}. 컨트롤과 숫자패드 0은 단축바에 올리기.");
 
     // ── Zugang zum Ziel (Aufgangs-Erkennung) ─────────────────────────
     // Wenn das Ziel auf einer Fläche liegt, die im Wegenetz nicht an unserer
@@ -2063,7 +2063,7 @@ public static partial class AccessibilityStrings
     public static string ApproachNoTarget =>
         Pick("Kein Ziel gewählt. Erst ein Ziel anvisieren oder im Objekt-Browser auswählen.",
              "No destination selected. Target something first, or pick it in the object browser.",
-             "고른 목적지 없음. 먼저 대상을 지정하거나 사물 목록에서 고른다.");
+             "고른 목적지 없음. 먼저 대상 지정이나 사물 목록에서 선택 필요.");
 
     /// <summary>Approach search: started (it takes a moment, so say so).</summary>
     public static string ApproachChecking(string target) =>
@@ -2198,7 +2198,7 @@ public static partial class AccessibilityStrings
     public static string SkillMenuPickTarget(string skillName, int count) =>
         Pick($"{skillName} gewählt. Ziel-Taste wählen, {count} verfügbar. Nummernblock 8 und 2 blättern, Nummernblock 0 belegt, Nummernblock Komma zurück.",
              $"{skillName} selected. Choose a target key, {count} available. Numpad 8 and 2 to browse, Numpad 0 assigns, Numpad decimal to go back.",
-             $"{skillName} 선택됨. 대상 키를 고른다. 고를 수 있는 키 {count}개. 숫자패드 8과 2로 넘기고, 숫자패드 0으로 배정하고, 숫자패드 마침표로 돌아간다.");
+             $"{skillName} 선택됨. 배정할 키 선택. 고를 수 있는 키 {count}개. 숫자패드 8과 2는 항목 이동, 0은 배정, 마침표는 뒤로.");
     /// <summary>One browsed target key: its label, what is on it now, position in list.</summary>
     public static string SkillMenuTargetEntry(string slotLabel, string current, int index, int count) =>
         Pick($"{slotLabel}, aktuell {current}, {index} von {count}",
@@ -2227,7 +2227,7 @@ public static partial class AccessibilityStrings
     public static string NoEmoteSelected =>
         Pick("Kein Emote gewählt. Erst durchblättern.",
              "No emote selected. Browse first.",
-             "고른 감정 표현 없음. 먼저 넘겨서 고른다.");
+             "고른 감정 표현 없음. 먼저 항목 이동으로 선택 필요.");
     public static string EmoteUnavailable =>
         Pick("Emote nicht verfügbar.", "Emote not available.", "감정 표현을 쓸 수 없음.");
     public static string EmoteFailed =>
@@ -2249,7 +2249,7 @@ public static partial class AccessibilityStrings
     public static string NoPluginSelected =>
         Pick("Kein Plugin gewählt. Erst durchblättern.",
              "No plugin selected. Browse first.",
-             "고른 플러그인 없음. 먼저 넘겨서 고른다.");
+             "고른 플러그인 없음. 먼저 항목 이동으로 선택 필요.");
     public static string PluginNoSettings(string name) =>
         Pick($"{name} hat keine Einstellungen.", $"{name} has no settings.", $"{name}, 설정 없음.");
     public static string PluginSettingsOpened(string name) =>
@@ -2296,7 +2296,7 @@ public static partial class AccessibilityStrings
     public static string NoFishingSpotNearEnough(string name, float distance) =>
         Pick($"Kein Angelplatz nah genug. Nächster: {name}, {distance:F0} Meter. Stell dich an die Angelstelle und drück erneut.",
              $"No fishing spot close enough. Nearest: {name}, {distance:F0} meters. Stand at the fishing spot and press again.",
-             $"충분히 가까운 낚시터 없음. 가장 가까운 곳: {name}, {distance:F0}미터. 낚시 자리에 서서 다시 누른다.");
+             $"충분히 가까운 낚시터 없음. 가장 가까운 곳: {name}, {distance:F0}미터. 낚시 자리에 서서 다시 시도 필요.");
     public static string MapUnknownCantRemember =>
         Pick("Aktuelle Karte unbekannt, kann die Stelle nicht merken.",
              "Current map unknown, cannot remember this spot.",
@@ -2350,7 +2350,7 @@ public static partial class AccessibilityStrings
     public static string LootRollFocused =>
         Pick("Verlosungs-Fenster im Fokus. Mit dem Nummernblock auswählen.",
              "Loot roll window focused. Use the numpad to choose.",
-             "전리품 입찰 창에 초점. 숫자패드로 고른다.");
+             "전리품 입찰 창이 초점 받음. 숫자패드는 선택.");
 
     /// <summary>Spoken when the focus key is pressed without a roll window up.</summary>
     public static string LootRollNoWindow =>
@@ -2566,7 +2566,7 @@ public static partial class AccessibilityStrings
     public static string NotificationAccept(string key) =>
         Pick($"Benachrichtigung. Mit {key} annehmen.",
              $"Notification. Press {key} to accept.",
-             $"알림. {key} 눌러 수락한다.");
+             $"알림. {key}는 수락.");
     public static string SecondsToJoin(int seconds) =>
         Pick($"Noch {seconds} Sekunden zum Beitreten.",
              $"{seconds} seconds left to join.",
