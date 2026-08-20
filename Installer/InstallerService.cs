@@ -292,6 +292,10 @@ public sealed partial class InstallerService
             return false;
         }
 
+        // Everything that needs an answer gets asked here, while this window is
+        // still the one in front. Past this line the updater owns the foreground.
+        AskAboutVnavmeshUpFront();
+
         // Opening it saves the one step the user would otherwise have to find a
         // path for. Failing to open it changes nothing - the path is printed above.
         if (!KrProfile.TryLaunchUpdater())
@@ -311,6 +315,10 @@ public sealed partial class InstallerService
         }
 
         Warn(Loc.Get("KrDalamudWaitGaveUp", DalamudWaitMinutes));
+        // Which half never arrived. Without it "it timed out" is the end of the
+        // trail for somebody who cannot look into the profile folder.
+        if (KrProfile.DalamudMissingPiece() is { } missing)
+            Info(Loc.Get("KrDalamudWaitMissing", missing));
         return false;
     }
 
@@ -321,11 +329,20 @@ public sealed partial class InstallerService
     /// </summary>
     private const int DalamudWaitMinutes = 15;
 
+    /// <summary>Backstop for events the watcher drops. Long on purpose - the
+    /// watcher is what makes this prompt, the polling only makes it certain.</summary>
+    private static readonly TimeSpan DalamudPollInterval = TimeSpan.FromSeconds(15);
+
+    /// <summary>How often the wait says it is still waiting. Fifteen silent
+    /// minutes are indistinguishable from a hung program, and this window is
+    /// read out one line at a time.</summary>
+    private static readonly TimeSpan DalamudProgressInterval = TimeSpan.FromMinutes(1);
+
     /// <summary>
     /// Waits until the updater has put Dalamud into the profile. True means it is
     /// there and the install carries on into the plugin step.
     ///
-    /// Polls the profile instead of watching the process: the updater stays open
+    /// Watches the profile instead of watching the process: the updater stays open
     /// after its work is done - it launches the game too - so waiting for it to
     /// exit would wait forever, and its exit code says nothing about Dalamud.
     /// </summary>
@@ -333,14 +350,73 @@ public sealed partial class InstallerService
     {
         Info(Loc.Get("KrWaitingForDalamud", DalamudWaitMinutes));
 
-        var deadline = DateTime.UtcNow.AddMinutes(DalamudWaitMinutes);
-        while (DateTime.UtcNow < deadline)
+        var ready = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var watcher = WatchProfile(ready);
+
+        var started = DateTime.UtcNow;
+        var deadline = started.AddMinutes(DalamudWaitMinutes);
+        var nextReport = started + DalamudProgressInterval;
+
+        while (!KrProfile.DalamudInstalled)
         {
-            if (KrProfile.DalamudInstalled) return true;
-            await Task.Delay(TimeSpan.FromSeconds(2));
+            var left = deadline - DateTime.UtcNow;
+            if (left <= TimeSpan.Zero) return KrProfile.DalamudInstalled;
+
+            await Task.WhenAny(
+                ready.Task,
+                Task.Delay(left < DalamudPollInterval ? left : DalamudPollInterval));
+
+            if (DateTime.UtcNow >= nextReport && !KrProfile.DalamudInstalled)
+            {
+                var elapsed = (int)Math.Round((DateTime.UtcNow - started).TotalMinutes);
+                Info(Loc.Get("KrStillWaiting", elapsed));
+                nextReport = DateTime.UtcNow + DalamudProgressInterval;
+            }
         }
 
-        return KrProfile.DalamudInstalled;
+        return true;
+    }
+
+    /// <summary>
+    /// Ends the wait the moment the profile becomes complete, rather than up to
+    /// one poll interval afterwards.
+    ///
+    /// Returns null when no watcher can be created, and the caller carries on
+    /// polling. That is deliberate: the watcher is the fast path, the polling is
+    /// the guarantee. A watcher also drops events silently once its buffer
+    /// overflows, and unpacking Dalamud produces exactly that kind of burst - so
+    /// the poll has to stay regardless.
+    /// </summary>
+    private static FileSystemWatcher? WatchProfile(TaskCompletionSource<bool> ready)
+    {
+        try
+        {
+            var watcher = new FileSystemWatcher(KrProfile.Root)
+            {
+                IncludeSubdirectories = true,
+                // The two pieces being waited for are both new files, so creation
+                // and renaming are enough. Watching writes as well would re-run
+                // the check for every block the updater unpacks.
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName,
+            };
+
+            void Look()
+            {
+                if (!ready.Task.IsCompleted && KrProfile.DalamudInstalled)
+                    ready.TrySetResult(true);
+            }
+
+            watcher.Created += (_, _) => Look();
+            watcher.Renamed += (_, _) => Look();
+            watcher.EnableRaisingEvents = true;
+            return watcher;
+        }
+        catch (Exception)
+        {
+            // A root that is not there, a path the API refuses, a filesystem
+            // without notifications. None of those may stop the install.
+            return null;
+        }
     }
 
     /// <summary>
@@ -823,6 +899,47 @@ public sealed partial class InstallerService
 
     // ── vnavmesh (Auto-Lauf) ───────────────────────────────────────────────
 
+    /// <summary>
+    /// The answer to the vnavmesh question when it was taken ahead of time. Null
+    /// means it has not been asked, and the vnavmesh step asks it itself.
+    /// </summary>
+    private bool? _vnavmeshWanted;
+
+    /// <summary>
+    /// Takes the vnavmesh answer while this window is still in front.
+    ///
+    /// It used to be asked from inside the vnavmesh step, which runs long after
+    /// the updater was launched and took the foreground - so the dialog opened
+    /// behind that window, and an install that was waiting for an answer nobody
+    /// could see looked frozen instead (2026-08-20, W-61).
+    ///
+    /// Nothing here needs the network or the updater: whether to ask at all is
+    /// decided by a manifest sitting in the profile.
+    /// </summary>
+    private void AskAboutVnavmeshUpFront()
+    {
+        if (SkipVnavmesh || _vnavmeshWanted is not null) return;
+
+        var manifestPath = Path.Combine(
+            DevPluginsRoot, VnavmeshInternalName, VnavmeshInternalName + ".json");
+
+        // Already installed means the step will only ever update it, and an
+        // update is not asked about.
+        if (ReadLocalManifestVersion(manifestPath) != null) return;
+
+        _vnavmeshWanted = AskAboutVnavmesh();
+    }
+
+    /// <summary>What vnavmesh is and where it comes from, then the question.</summary>
+    private bool AskAboutVnavmesh()
+    {
+        Info(string.Empty);
+        Info(Loc.Get("AutoWalkNeedsVnav1"));
+        Info(Loc.Get("AutoWalkNeedsVnav2"));
+        Info(Loc.Get("AutoWalkNeedsVnav3"));
+        return AskYesNo?.Invoke(Loc.Get("AskSetupVnavmesh")) ?? false;
+    }
+
     private async Task<string> UpdateVnavmeshAsync()
     {
         Info(Loc.Get("CheckingVnavmeshVersion"));
@@ -881,18 +998,10 @@ public sealed partial class InstallerService
             return Loc.Get("UpToDateShort", localVersion);
         }
 
-        if (localVersion == null)
+        if (localVersion == null && !(_vnavmeshWanted ?? AskAboutVnavmesh()))
         {
-            Info(string.Empty);
-            Info(Loc.Get("AutoWalkNeedsVnav1"));
-            Info(Loc.Get("AutoWalkNeedsVnav2"));
-            Info(Loc.Get("AutoWalkNeedsVnav3"));
-            var yes = AskYesNo?.Invoke(Loc.Get("AskSetupVnavmesh")) ?? false;
-            if (!yes)
-            {
-                Info(Loc.Get("VnavmeshSkipped"));
-                return Loc.Get("SkippedShort");
-            }
+            Info(Loc.Get("VnavmeshSkipped"));
+            return Loc.Get("SkippedShort");
         }
 
         try
