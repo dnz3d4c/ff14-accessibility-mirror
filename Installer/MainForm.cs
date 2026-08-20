@@ -110,6 +110,7 @@ public sealed class MainForm : Form
             // so weiss der Nutzer, dass der Neustart Absicht war.
             AppendLog(Loc.Get("InstallerUpdatedTo", ownVersion));
             MessageBox.Show(
+                this,
                 Loc.Get("InstallerUpdatedMessage", ownVersion),
                 Loc.Get("WindowTitle"),
                 MessageBoxButtons.OK,
@@ -147,7 +148,12 @@ public sealed class MainForm : Form
     {
         // Läuft bereits auf dem UI-Thread (RunAsync wird ohne ConfigureAwait(false)
         // ausgeführt), daher ist ein direkter MessageBox.Show hier sicher.
+        //
+        // Owner, weil ein Dialog ohne Besitzer hinter fremden Fenstern landet:
+        // der KR-Updater nimmt beim Start den Vordergrund, und die Rueckfrage
+        // verschwand dahinter (2026-08-20, W-61).
         var result = MessageBox.Show(
+            this,
             question,
             Loc.Get("WindowTitle"),
             MessageBoxButtons.YesNo,
@@ -166,6 +172,7 @@ public sealed class MainForm : Form
                 return;   // Selbst-Update laeuft: keine Abschlussmeldung, Fenster schliesst sich.
 
             MessageBox.Show(
+                this,
                 Loc.Get("OperationCompleted"),
                 Loc.Get("WindowTitle"),
                 MessageBoxButtons.OK,
@@ -174,6 +181,7 @@ public sealed class MainForm : Form
         catch (Exception ex)
         {
             MessageBox.Show(
+                this,
                 Loc.Get("UnexpectedError", ex.Message),
                 Loc.Get("WindowTitle"),
                 MessageBoxButtons.OK,
