@@ -18,9 +18,9 @@
          FileVersion reach the PE resource, and ParseVersionLoose returns null for
          anything that is not up to four numeric fields - IsNewer then falls back
          to a string compare and offers the same build forever. -->
-    <Version>1.1.1.1</Version>
-    <AssemblyVersion>1.1.1.1</AssemblyVersion>
-    <FileVersion>1.1.1.1</FileVersion>
+    <Version>1.1.1.2</Version>
+    <AssemblyVersion>1.1.1.2</AssemblyVersion>
+    <FileVersion>1.1.1.2</FileVersion>
     <!-- Barrierefreiheit: WinForms-GUI. Standardcontrols (Label, TextBox, Button)
          setzen automatisch die klassischen Win32/UIA-Properties, NVDA/JAWS lesen
          sie ohne Zusatzaufwand vor. Status-Updates gehen zusaetzlich in ein
@@ -42,6 +42,24 @@
          gefaehrden. Fuer die reinen GitHub-/puni.sh-JSON-Antworten (ohne $type)
          wird dagegen System.Text.Json.Nodes verwendet (siehe InstallerService). -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- KR fork: the launcher that starts the game and the Korean updater
+         together, carried inside this EXE and written out during the install.
+
+         Deliberately NOT conditional on the file existing. A missing launcher
+         has to break the build here, at the one moment somebody is looking at
+         it; made optional, it produces an installer that runs to completion and
+         quietly puts down no shortcut. run\pack.bat publishes the Launcher
+         project before this one for exactly that reason.
+
+         The published file, not the built one: the launcher is
+         framework-dependent, so its build output is an exe plus a dll plus a
+         runtimeconfig, and only the single-file publish is one file to embed. -->
+    <EmbeddedResource
+      Include="..\Launcher\bin\Release\net10.0-windows\win-x64\publish\FF14AccessibilityPlay.exe"
+      LogicalName="FF14AccessibilityPlay.exe" />
   </ItemGroup>
 
 </Project>
