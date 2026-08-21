@@ -222,11 +222,14 @@ public sealed partial class InstallerService
             var vnavResult = SkipVnavmesh ? Loc.Get("SkippedShort") : await UpdateVnavmeshAsync();
             Info(string.Empty);
             var patchResult = PatchDalamudConfig();
+            Info(string.Empty);
+            var playResult = InstallPlayLauncher();
 
             Info(string.Empty);
             Info(Loc.Get("SummaryHeader"));
             Info(Loc.Get("SummaryAccessibility", accResult));
             Info(Loc.Get("SummaryVnavmesh", vnavResult));
+            Info(Loc.Get("SummaryPlayLauncher", playResult));
             Info(patchResult);
         }
         catch (Exception ex)
@@ -344,6 +347,160 @@ public sealed partial class InstallerService
         if (KrProfile.DalamudMissingPiece() is { } missing)
             Info(Loc.Get("KrDalamudWaitMissing", missing));
         return false;
+    }
+
+    // ── Play launcher ──────────────────────────────────────────────────────
+
+    /// <summary>Name of the embedded launcher, and of the file written out. The
+    /// csproj sets the same string as the resource's LogicalName.</summary>
+    private const string LauncherExeName = "FF14AccessibilityPlay.exe";
+
+    /// <summary>Where the launcher and, later, anything else of ours lives.
+    /// LocalApplicationData needs no elevation.</summary>
+    private static string OurAppFolder => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "FF14Accessibility");
+
+    /// <summary>
+    /// Writes the launcher out and puts a shortcut to it on the desktop and in
+    /// the Start menu. Returns the summary word for that line.
+    ///
+    /// What this removes is a step the user had to repeat on every single
+    /// session: start the updater, then start the game. One shortcut does both,
+    /// and nothing is left running afterwards - no logon entry, no tray icon.
+    ///
+    /// Overwrites an existing launcher without asking. It is our file, the
+    /// version inside this EXE is the one that matches this install, and an old
+    /// one left in place is the kind of mismatch nobody would think to look for.
+    /// </summary>
+    private string InstallPlayLauncher()
+    {
+        Info(Loc.Get("PlayLauncherInstalling"));
+
+        var exePath = Path.Combine(OurAppFolder, LauncherExeName);
+        try
+        {
+            Directory.CreateDirectory(OurAppFolder);
+
+            using var resource = Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream(LauncherExeName);
+            if (resource is null)
+            {
+                // Only reachable from a build that dropped the EmbeddedResource
+                // item, which the csproj is written to make impossible.
+                Warn(Loc.Get("PlayLauncherMissingResource"));
+                return Loc.Get("ErrorShort");
+            }
+
+            using var file = File.Create(exePath);
+            resource.CopyTo(file);
+        }
+        catch (Exception ex)
+        {
+            Warn(Loc.Get("PlayLauncherFailed", ex.Message));
+            return Loc.Get("ErrorShort");
+        }
+
+        var name = Loc.Get("PlayShortcutName");
+        var made = 0;
+        foreach (var place in ShortcutFolders())
+        {
+            var linkPath = Path.Combine(place, name + ".lnk");
+            if (CreateShortcut(linkPath, exePath, OurAppFolder, name))
+            {
+                Info(Loc.Get("PlayLauncherShortcutMade", linkPath));
+                made++;
+            }
+            else
+            {
+                Warn(Loc.Get("PlayLauncherShortcutFailed", linkPath));
+            }
+        }
+
+        if (made == 0)
+        {
+            // The launcher itself is on disk and runnable, so say where it is.
+            // "Could not create the shortcut" without a path is not something a
+            // person can act on.
+            Info(Loc.Get("PlayLauncherRunItDirectly"));
+            Info("  " + exePath);
+            return Loc.Get("ErrorShort");
+        }
+
+        Info(Loc.Get("PlayLauncherReady", name));
+        return Loc.Get("OkShort");
+    }
+
+    /// <summary>
+    /// Where the shortcuts go: the desktop and the per-user Start menu, unless
+    /// FF14ACC_SHORTCUT_DIR redirects them into one folder.
+    ///
+    /// The per-user Start menu, not the machine-wide one - writing into that
+    /// needs elevation, and this step must raise no prompt of its own.
+    ///
+    /// The override is the same kind of escape hatch as FF14ACC_KR_PROFILE, and
+    /// it is what lets the shortcut be verified at all: without it
+    /// tools/pack-check would drop a shortcut onto the real desktop on every
+    /// run, so the check would have to skip this step, and a step no check ever
+    /// enters is how vnavmesh ended up outside e2e (status.md W-52).
+    /// </summary>
+    private static string[] ShortcutFolders()
+    {
+        var overridden = Environment.GetEnvironmentVariable("FF14ACC_SHORTCUT_DIR");
+        if (!string.IsNullOrWhiteSpace(overridden)) return [overridden];
+
+        return
+        [
+            Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+            Environment.GetFolderPath(Environment.SpecialFolder.Programs),
+        ];
+    }
+
+    /// <summary>
+    /// Makes a .lnk through WScript.Shell.
+    ///
+    /// Late-bound through reflection rather than <c>dynamic</c>: the C# dynamic
+    /// keyword pulls in Microsoft.CSharp's binder, and that binding does not
+    /// survive PublishSingleFile with SelfContained - which is exactly how this
+    /// EXE ships.
+    ///
+    /// A shortcut, not a copy of the EXE in those folders. The launcher has to
+    /// keep running from one known place so the next install replaces it.
+    /// </summary>
+    private static bool CreateShortcut(
+        string linkPath, string targetPath, string workingDirectory, string description)
+    {
+        try
+        {
+            var shellType = Type.GetTypeFromProgID("WScript.Shell");
+            if (shellType is null) return false;
+
+            var shell = Activator.CreateInstance(shellType);
+            if (shell is null) return false;
+
+            var link = shellType.InvokeMember(
+                "CreateShortcut", BindingFlags.InvokeMethod, null, shell,
+                new object[] { linkPath });
+            if (link is null) return false;
+
+            var linkType = link.GetType();
+            void Set(string property, string value) => linkType.InvokeMember(
+                property, BindingFlags.SetProperty, null, link, new object[] { value });
+
+            Set("TargetPath", targetPath);
+            Set("WorkingDirectory", workingDirectory);
+            // Read out as the tooltip, and by a screen reader along with the name.
+            Set("Description", description);
+            linkType.InvokeMember("Save", BindingFlags.InvokeMethod, null, link, null);
+            return true;
+        }
+        catch (Exception)
+        {
+            // Group policy can block the Windows Script Host outright. Nothing
+            // else in the install depends on this, and the caller prints the
+            // launcher's own path when it fails.
+            return false;
+        }
     }
 
     // ── .NET desktop runtime ───────────────────────────────────────────────

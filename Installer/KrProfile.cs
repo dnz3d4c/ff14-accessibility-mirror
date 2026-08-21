@@ -614,6 +614,104 @@ internal static class KrProfile
         return null;
     }
 
+    // ── Launching the game with the updater ───────────────────────────────
+    //
+    // Used by the Launcher project, which compiles this file in rather than
+    // referencing it - the class is internal, and copying the paths into a
+    // second place is how KeyNames and Plugin.KeyNameToVK drifted until three
+    // bindings died silently (status.md W-04).
+
+    /// <summary>
+    /// PREFIX of the updater's process name, not the whole name.
+    ///
+    /// Dalamud.Updater.exe is a bootstrapper: it starts
+    /// versions\&lt;build&gt;\Dalamud.Updater.Gui.exe and steps aside. Measured
+    /// 2026-08-21, the only process running was Dalamud.Updater.Gui - asking for
+    /// an exact name here fails to recognise a running updater and opens a
+    /// second one, which puts two injectors on the same game.
+    ///
+    /// Mirrored in tools/kr-setup/kr_profile.py, where the names are tested.
+    /// </summary>
+    private const string UpdaterProcessPrefix = "Dalamud.Updater";
+
+    /// <summary>Whether a process name belongs to the Korean Dalamud updater.</summary>
+    internal static bool IsUpdaterProcessName(string name)
+        => name.StartsWith(UpdaterProcessPrefix, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The Start-menu shortcut the Korean client's own installer creates. It is
+    /// the authority here: the Korean client registers no uninstall entry, so
+    /// there is no registry key to read the install location out of, and this
+    /// shortcut carries the working directory the game needs.
+    /// </summary>
+    public static string GameShortcutPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),
+        "FINAL FANTASY XIV - KOREA", "FINAL FANTASY XIV - KOREA.lnk");
+
+    /// <summary>Where the boot executable sits by default. Only reached when the
+    /// shortcut is gone, which is also the only case where the default is the
+    /// best guess available.</summary>
+    public static string GameBootExePath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+        "FINAL FANTASY XIV - KOREA", "boot", "FFXIV_Boot.exe");
+
+    /// <summary>True while the Korean Dalamud updater has a window open. Starting
+    /// a second one puts two injectors on the same game.</summary>
+    public static bool UpdaterRunning()
+    {
+        try
+        {
+            // GetProcesses, not GetProcessesByName: the latter matches the name
+            // exactly, and the name we would have to pass is not the one that
+            // actually runs.
+            foreach (var process in Process.GetProcesses())
+            {
+                using (process)
+                {
+                    if (IsUpdaterProcessName(process.ProcessName)) return true;
+                }
+            }
+            return false;
+        }
+        catch (Exception)
+        {
+            // Not being able to look is not the same as "it is not running", but
+            // launching a second updater is the milder of the two mistakes: it
+            // notices the first one itself.
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Starts the Korean client. Returns false when neither the shortcut nor the
+    /// default install is there.
+    ///
+    /// The shortcut goes first and is started WITHOUT a working directory of our
+    /// own: the shell takes the one recorded inside the .lnk, and overriding it
+    /// would defeat the reason for preferring the shortcut. The bare executable
+    /// does need one - started from our own folder, the game looks for its files
+    /// in the wrong place.
+    /// </summary>
+    public static bool TryLaunchGame()
+        => TryStartFile(GameShortcutPath, null)
+        || TryStartFile(GameBootExePath, Path.GetDirectoryName(GameBootExePath));
+
+    private static bool TryStartFile(string path, string? workingDirectory)
+    {
+        if (!File.Exists(path)) return false;
+        try
+        {
+            var info = new ProcessStartInfo(path) { UseShellExecute = true };
+            if (workingDirectory is not null) info.WorkingDirectory = workingDirectory;
+            Process.Start(info);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Opens the Korean Dalamud updater if it is installed. Returns false if it is not.
     ///
