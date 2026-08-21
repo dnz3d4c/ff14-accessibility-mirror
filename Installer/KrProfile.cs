@@ -434,6 +434,108 @@ internal static class KrProfile
         return added;
     }
 
+    // ── The .NET desktop runtime ──────────────────────────────────────────
+    //
+    // Mirrored in tools/kr-setup/kr_profile.py and a test fails if the two
+    // drift apart, same arrangement as the updater constants above.
+    //
+    // Without this runtime DALAMUD_RUNTIME stays empty and the CLR never comes
+    // up inside the game - the failure this class calls the nasty one at the
+    // top, because nothing anywhere reports it. Fetching an installer from
+    // Microsoft is not redistribution, so nothing stops us from doing it for
+    // the user; the vnavmesh and updater steps already fetch on their behalf.
+
+    /// <summary>Where the desktop runtime installer comes from. Pinned to the
+    /// 10.0 channel rather than a build, so a patch release does not age this
+    /// out. Measured: 301 to builds.dotnet.microsoft.com.</summary>
+    public const string DotnetDownloadUrl =
+        "https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64.exe";
+
+    /// <summary>Which major has to be there. The plugin targets net10.0-windows.</summary>
+    public const int DotnetRequiredMajor = 10;
+
+    /// <summary>Unattended install, per Microsoft Learn "Install .NET on Windows".</summary>
+    public const string DotnetInstallArgs = "/install /quiet /norestart";
+
+    /// <summary>Folder under &lt;dotnetRoot&gt;\shared holding one folder per version.</summary>
+    public const string DotnetDesktopShared = "Microsoft.WindowsDesktop.App";
+
+    /// <summary>Where the system .NET lives. The same folder
+    /// <see cref="EnsureRuntimeVariable"/> points DALAMUD_RUNTIME at, so the
+    /// two can never disagree about what "installed" means.</summary>
+    public static string DotnetRoot => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet");
+
+    /// <summary>
+    /// True when <paramref name="dotnetRoot"/> carries a desktop runtime of that
+    /// major version.
+    ///
+    /// Reads the directory rather than calling <c>dotnet --list-runtimes</c>: the
+    /// system dotnet here carries no SDK and answers 155 to <c>--version</c>, and
+    /// the updater's own bootstrap looks at the same folders.
+    ///
+    /// The root is a parameter on purpose. The "nothing installed" branch is the
+    /// one a new user hits first and it cannot occur on a machine that already
+    /// has .NET, so a test has to be able to point this at an empty folder.
+    /// </summary>
+    public static bool HasDesktopRuntime(string dotnetRoot, int major = DotnetRequiredMajor)
+    {
+        var shared = Path.Combine(dotnetRoot, "shared", DotnetDesktopShared);
+        try
+        {
+            foreach (var folder in Directory.EnumerateDirectories(shared))
+            {
+                var head = Path.GetFileName(folder).Split('.')[0];
+                if (int.TryParse(head, out var parsed) && parsed == major) return true;
+            }
+        }
+        catch (Exception)
+        {
+            // No folder means no runtime, and an unreadable one is not something
+            // we can install our way out of either.
+            return false;
+        }
+        return false;
+    }
+
+    /// <summary>What came of running the .NET installer.</summary>
+    public enum DotnetInstallResult
+    {
+        /// <summary>It is on disk now.</summary>
+        Installed,
+
+        /// <summary>Installed, but Windows wants a restart first.</summary>
+        RebootRequired,
+
+        /// <summary>The user dismissed the elevation prompt.</summary>
+        Cancelled,
+
+        /// <summary>Anything else.</summary>
+        Failed,
+    }
+
+    /// <summary>
+    /// Turns an installer exit code into a verdict. Mirrored in
+    /// tools/kr-setup/kr_profile.py (<c>dotnet_install_result</c>), where the
+    /// cases are tested.
+    ///
+    /// 3010 must not read as a failure: the runtime IS installed, Windows just
+    /// wants a restart. Calling that "install failed" sends the user off to fix
+    /// something that is already done.
+    ///
+    /// 1223 is not an exit code at all - it is the Win32 error raised when the
+    /// elevation prompt is dismissed, so the process never starts and there is no
+    /// code. It comes through this same table because two paths deciding the same
+    /// thing separately is how they drift.
+    /// </summary>
+    public static DotnetInstallResult ClassifyInstallCode(int exitCode) => exitCode switch
+    {
+        0 => DotnetInstallResult.Installed,
+        3010 => DotnetInstallResult.RebootRequired,
+        1223 => DotnetInstallResult.Cancelled,
+        _ => DotnetInstallResult.Failed,
+    };
+
     /// <summary>How <see cref="EnsureRuntimeVariable"/> left DALAMUD_RUNTIME.</summary>
     public enum RuntimeState
     {
@@ -463,8 +565,7 @@ internal static class KrProfile
     /// </summary>
     public static (RuntimeState State, string Folder) EnsureRuntimeVariable()
     {
-        var dotnetRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet");
+        var dotnetRoot = DotnetRoot;
 
         var existing = Environment.GetEnvironmentVariable("DALAMUD_RUNTIME", EnvironmentVariableTarget.User);
         if (!string.IsNullOrWhiteSpace(existing) && Directory.Exists(existing))
