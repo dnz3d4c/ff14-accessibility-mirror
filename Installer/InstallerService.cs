@@ -144,6 +144,22 @@ public sealed partial class InstallerService
     public bool SkipReleaseCheck { get; set; }
 
     /// <summary>
+    /// Turns off installing .NET, detection excluded - the check still runs and
+    /// still says what it found.
+    ///
+    /// An environment variable rather than a flag, and that is the point:
+    /// --install is the only way to install without a mouse, so a real user
+    /// takes that path and must get the runtime. What must not happen is
+    /// tools/pack-check stopping at an elevation prompt in an unattended run.
+    /// The variable lets the check opt out without taking the runtime away from
+    /// anybody who typed --install themselves.
+    ///
+    /// Named like FF14ACC_KR_PROFILE, which is the same kind of escape hatch.
+    /// </summary>
+    public static bool SkipDotnetInstall =>
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("FF14ACC_SKIP_DOTNET"));
+
+    /// <summary>
     /// The version folder of the installed copy, or null if there is none.
     /// Exists so --check and --install can report the result from outside the
     /// GUI: "the installer said it worked" and "the files are where Dalamud
@@ -251,6 +267,12 @@ public sealed partial class InstallerService
         else
             Info(Loc.Get("KrProfileFound"));
 
+        // Before EnsureRuntimeVariable, not after. That call points
+        // DALAMUD_RUNTIME at the system .NET, so the runtime has to be there
+        // first; the other order leaves the variable pointing at a folder
+        // without the runtime in it, and that is the failure nobody sees.
+        await EnsureDotnetRuntimeAsync();
+
         var runtime = KrProfile.EnsureRuntimeVariable();
         switch (runtime.State)
         {
@@ -322,6 +344,135 @@ public sealed partial class InstallerService
         if (KrProfile.DalamudMissingPiece() is { } missing)
             Info(Loc.Get("KrDalamudWaitMissing", missing));
         return false;
+    }
+
+    // ── .NET desktop runtime ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Makes sure the .NET desktop runtime is on the machine, fetching and
+    /// installing it when it is not.
+    ///
+    /// This used to be a sentence telling the user to go and install it
+    /// (KrRuntimeGetDotnet), which is exactly what the repository's own rule
+    /// forbids: the installer must not hand over work it can do itself. Nothing
+    /// blocked us either - the licence stops us REDISTRIBUTING the runtime, not
+    /// from fetching Microsoft's own installer on the user's behalf, and the
+    /// same run already fetches vnavmesh and the Korean updater for them.
+    ///
+    /// Asked here rather than later, for the reason AskAboutVnavmeshUpFront
+    /// documents: past the updater launch our dialogs open behind its window.
+    ///
+    /// Deliberately does not fail the install. A refused or failed runtime
+    /// install still leaves a profile worth building, and the lines printed by
+    /// EnsureRuntimeVariable right after say what that costs.
+    /// </summary>
+    private async Task EnsureDotnetRuntimeAsync()
+    {
+        if (KrProfile.HasDesktopRuntime(KrProfile.DotnetRoot))
+        {
+            Info(Loc.Get("DotnetPresent", KrProfile.DotnetRequiredMajor, KrProfile.DotnetRoot));
+            return;
+        }
+
+        // Say it either way. The check having run is itself the information when
+        // somebody later asks why the game came up without the mod.
+        Info(Loc.Get("DotnetMissing", KrProfile.DotnetRequiredMajor, KrProfile.DotnetRoot));
+
+        if (SkipDotnetInstall)
+        {
+            Warn(Loc.Get("DotnetSkipped"));
+            return;
+        }
+
+        if (AskYesNo?.Invoke(Loc.Get("AskInstallDotnet", KrProfile.DotnetRequiredMajor)) != true)
+        {
+            Warn(Loc.Get("DotnetInstallDeclined"));
+            return;
+        }
+
+        var installerPath = Path.Combine(
+            Path.GetTempPath(), "windowsdesktop-runtime-ff14acc.exe");
+
+        try
+        {
+            Info(Loc.Get("DotnetDownloading"));
+            await DownloadFileAsync(KrProfile.DotnetDownloadUrl, installerPath,
+                                    Loc.Get("DotnetLabel"));
+        }
+        catch (Exception ex)
+        {
+            Warn(Loc.Get("DotnetDownloadFailed", ex.Message));
+            Info(Loc.Get("DotnetGetByHand"));
+            Info("  " + KrProfile.DotnetDownloadUrl);
+            TryDeleteFile(installerPath);
+            return;
+        }
+
+        Info(Loc.Get("DotnetInstalling"));
+        var (verdict, code) = await RunDotnetInstallerAsync(installerPath);
+        TryDeleteFile(installerPath);
+
+        switch (verdict)
+        {
+            case KrProfile.DotnetInstallResult.Installed:
+                Info(Loc.Get("DotnetInstalled", KrProfile.DotnetRequiredMajor));
+                break;
+
+            // Installed. Saying "failed" here would send somebody off to fix
+            // something that is already done.
+            case KrProfile.DotnetInstallResult.RebootRequired:
+                Info(Loc.Get("DotnetInstalled", KrProfile.DotnetRequiredMajor));
+                Warn(Loc.Get("DotnetRebootRequired"));
+                break;
+
+            case KrProfile.DotnetInstallResult.Cancelled:
+                Warn(Loc.Get("DotnetInstallCancelled"));
+                break;
+
+            default:
+                Warn(Loc.Get("DotnetInstallFailed", code));
+                Info(Loc.Get("DotnetGetByHand"));
+                Info("  " + KrProfile.DotnetDownloadUrl);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Runs the downloaded installer elevated and waits. Returns the verdict and
+    /// the raw number behind it, because "it failed" without the code is the end
+    /// of the trail for somebody who cannot read the installer's own window.
+    ///
+    /// Only the child process is elevated. Ours is not, so the prompt appears
+    /// once, and only on a machine actually missing the runtime.
+    ///
+    /// WaitForExitAsync, not WaitForExit: RunAsync runs on the UI thread, and a
+    /// blocking wait would freeze the window for the length of an install.
+    /// </summary>
+    private static async Task<(KrProfile.DotnetInstallResult Verdict, int Code)>
+        RunDotnetInstallerAsync(string installerPath)
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(installerPath)
+            {
+                Arguments = KrProfile.DotnetInstallArgs,
+                UseShellExecute = true,
+                Verb = "runas",
+            });
+
+            if (process is null)
+                return (KrProfile.DotnetInstallResult.Failed, -1);
+
+            await process.WaitForExitAsync();
+            return (KrProfile.ClassifyInstallCode(process.ExitCode), process.ExitCode);
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            // Dismissing the elevation prompt lands here (1223) - the process
+            // never starts, so there is no exit code to classify. Same table
+            // either way; two paths deciding this separately is how they drift.
+            return (KrProfile.ClassifyInstallCode(ex.NativeErrorCode), ex.NativeErrorCode);
+        }
     }
 
     /// <summary>
