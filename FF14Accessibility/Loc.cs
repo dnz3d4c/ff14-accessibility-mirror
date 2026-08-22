@@ -83,6 +83,24 @@ public static class Loc
     public static bool IsKorean => Current == LanguageMode.Korean;
 
     /// <summary>
+    /// Zweibuchstabiger Sprachcode der laufenden Sprache, fuer fremde APIs, die
+    /// nach Kultur auswaehlen statt nach unserem Enum - SAPI zum Beispiel.
+    ///
+    /// WARUM HIER UND NICHT BEIM AUFRUFER: ein "IsGerman ? de : en" beim Aufrufer
+    /// ist genau so lange richtig, wie es zwei Sprachen gibt. Mit der dritten wird
+    /// daraus stillschweigend "alles ausser Deutsch ist Englisch" - und still ist
+    /// das Schlimme daran, weil eine englische Stimme koreanischen Text ja
+    /// vorliest, nur unverstaendlich. Steht die Zuordnung hier, wandert jede
+    /// weitere Sprache an einer Stelle mit.
+    /// </summary>
+    public static string CultureCode => Current switch
+    {
+        LanguageMode.Korean => "ko",
+        LanguageMode.German => "de",
+        _ => "en",
+    };
+
+    /// <summary>
     /// Picks the wording for the language in use.
     ///
     /// Korean falls back to English while <paramref name="ko"/> is null. That is
