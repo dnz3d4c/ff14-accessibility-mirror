@@ -724,13 +724,19 @@ public static partial class AccessibilityStrings
     /// <summary>Category count. The enemy part is only spoken while a battle leve
     /// is running - outside that there are no leve enemies, and a permanent
     /// "0 Gegner" would make the player look for something that cannot be there.</summary>
+    // [KR] Die Verzweigung nach enemies steht ABSICHTLICH aussen. Der Generator
+    // (tools/ko-apply) liest nur ein flaches "IsGerman ? de : en"; an einer
+    // verschachtelten Fassung geht er vorbei, die Zeile faellt still aus dem
+    // Katalog und bleibt auf Englisch, ohne dass eine Pruefung anschlaegt.
+    // Aussen verzweigt stehen beide Zweige wieder flach da. Die Saetze selbst
+    // sind Wort fuer Wort unveraendert - der Golden-Snapshot bleibt gruen.
     public static string CategoryLevequestCount(int givers, int goals, int enemies) =>
-        IsGerman
-            ? enemies > 0
+        enemies > 0
+            ? IsGerman
                 ? $"Freibriefe: {enemies} Gegner, {givers} Geber, {goals} Ziele."
-                : $"Freibriefe: {givers} Geber, {goals} Ziele."
-            : enemies > 0
-                ? $"Levequests: {enemies} enemies, {givers} givers, {goals} goals."
+                : $"Levequests: {enemies} enemies, {givers} givers, {goals} goals."
+            : IsGerman
+                ? $"Freibriefe: {givers} Geber, {goals} Ziele."
                 : $"Levequests: {givers} givers, {goals} goals.";
 
     /// <summary>Spoken role prefix so the player knows whether a leve destination
