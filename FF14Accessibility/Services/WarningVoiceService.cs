@@ -149,7 +149,11 @@ public sealed class WarningVoiceService : IDisposable
         if (!string.IsNullOrEmpty(chosen) && InstalledVoices.Contains(chosen))
             return chosen;
 
-        var want = Loc.IsGerman ? "de" : "en";
+        // [KR] Loc.CultureCode statt "IsGerman ? de : en": mit der dritten Sprache
+        // waehlte die alte Form fuer Koreanisch eine ENGLISCHE Stimme aus, die den
+        // koreanischen Warntext dann unverstaendlich vorliest. Genau der Fall, den
+        // der Kommentar oben ausschliessen will.
+        var want = Loc.CultureCode;
         foreach (var voice in _synth.GetInstalledVoices())
         {
             if (!voice.Enabled) continue;
