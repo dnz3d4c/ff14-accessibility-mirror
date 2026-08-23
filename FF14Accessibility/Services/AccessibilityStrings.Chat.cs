@@ -26,15 +26,15 @@ public static partial class AccessibilityStrings
     public static string MenuEntry(string label, int index, int count) =>
         RowWithPosition(label, index, count);
 
-    public static string MenuClosed => IsGerman ? "Menü geschlossen." : "Menu closed.";
+    public static string MenuClosed => Pick("Menü geschlossen.", "Menu closed.", "메뉴 닫힘.");
 
-    public static string MenuEmpty => IsGerman ? "Keine Einträge." : "No entries.";
+    public static string MenuEmpty => Pick("Keine Einträge.", "No entries.", "항목 없음.");
 
     // ── Einstellungsmenü ──────────────────────────────────────────
 
-    public static string OptionsTitle => IsGerman ? "Einstellungen" : "Settings";
-    public static string OptionsSounds => IsGerman ? "Töne" : "Sounds";
-    public static string OptionsAnnouncements => IsGerman ? "Ansagen" : "Announcements";
+    public static string OptionsTitle => Pick("Einstellungen", "Settings", "설정");
+    public static string OptionsSounds => Pick("Töne", "Sounds", "소리");
+    public static string OptionsAnnouncements => Pick("Ansagen", "Announcements", "안내");
 
     /// <summary>Eine An/Aus-Zeile: "Kartenmarkierung, an".</summary>
     public static string OptionToggle(string name, bool on) =>
@@ -51,22 +51,25 @@ public static partial class AccessibilityStrings
     /// <summary>Eine Lautstärke-Zeile: "Beacon, 35 Prozent" oder "Beacon, aus".</summary>
     public static string OptionVolume(string name, float volume) =>
         volume <= 0f
-            ? (IsGerman ? $"{name}, aus" : $"{name}, off")
-            : (IsGerman ? $"{name}, {(int)MathF.Round(volume * 100)} Prozent"
-                        : $"{name}, {(int)MathF.Round(volume * 100)} percent");
+            ? (Pick($"{name}, aus", $"{name}, off", $"{name}, 꺼짐"))
+            : (Pick($"{name}, {(int)MathF.Round(volume * 100)} Prozent",
+                    $"{name}, {(int)MathF.Round(volume * 100)} percent",
+                    $"{name}, {(int)MathF.Round(volume * 100)} 퍼센트"));
 
     /// <summary>Eine einzelne Stufe im Lautstärke-Untermenü.</summary>
     public static string VolumeStep(float volume) =>
         volume <= 0f
-            ? (IsGerman ? "Aus" : "Off")
-            : (IsGerman ? $"{(int)MathF.Round(volume * 100)} Prozent"
-                        : $"{(int)MathF.Round(volume * 100)} percent");
+            ? (Pick("Aus", "Off", "꺼짐"))
+            : (Pick($"{(int)MathF.Round(volume * 100)} Prozent",
+                    $"{(int)MathF.Round(volume * 100)} percent",
+                    $"{(int)MathF.Round(volume * 100)} 퍼센트"));
 
     public static string VolumeSet(string name, float volume) =>
         volume <= 0f
-            ? (IsGerman ? $"{name} aus." : $"{name} off.")
-            : (IsGerman ? $"{name} auf {(int)MathF.Round(volume * 100)} Prozent."
-                        : $"{name} at {(int)MathF.Round(volume * 100)} percent.");
+            ? (Pick($"{name} aus.", $"{name} off.", $"{name} 꺼짐으로 변경됨."))
+            : (Pick($"{name} auf {(int)MathF.Round(volume * 100)} Prozent.",
+                    $"{name} at {(int)MathF.Round(volume * 100)} percent.",
+                    $"{name} {(int)MathF.Round(volume * 100)} 퍼센트로 변경됨."));
 
     // Namen der einzelnen Einstellungen. Jede Zeile hier hat ein Feld in
     // Configuration und einen Dienst dahinter, der es liest - eine Beschriftung ohne
@@ -78,91 +81,99 @@ public static partial class AccessibilityStrings
     // 2026-08-23 laeuft er nur waehrend eines Laufs, und die Beschriftung muss
     // das sagen, sonst sucht der Spieler den Fehler beim Ton statt beim Lauf.
     /// <summary>Schalter für den Peil-Ton, der während eines Laufs die Richtung hält.</summary>
-    public static string OptTargetBeacon => IsGerman ? "Peil-Ton beim Laufen" : "Navigation beacon";
+    public static string OptTargetBeacon => Pick("Peil-Ton beim Laufen",
+                                                 "Navigation beacon",
+                                                 "길안내 신호음");
 
     // Heisst weiterhin so, weil es die LAUTSTAERKE desselben Tons ist.
-    public static string OptBeacon => IsGerman ? "Lautstärke Peil-Ton" : "Navigation beacon volume";
+    public static string OptBeacon => Pick("Lautstärke Peil-Ton",
+                                           "Navigation beacon volume",
+                                           "길안내 신호음 음량");
 
     /// <summary>Schalter für die HP- und MP-Töne (jede 10-Prozent-Stufe).</summary>
-    public static string OptVitalCues => IsGerman ? "Töne für Leben und Mana" : "Health and mana tones";
+    public static string OptVitalCues => Pick("Töne für Leben und Mana",
+                                              "Health and mana tones",
+                                              "HP MP 신호음");
 
     /// <summary>Lautstärke der HP- und MP-Töne.</summary>
     public static string OptVitalCueVolume =>
-        IsGerman ? "Lautstärke Leben und Mana" : "Health and mana tone volume";
-    public static string OptRouteCues => IsGerman ? "Wegpunkt- und Ankunftston" : "Waypoint and arrival cues";
+        Pick("Lautstärke Leben und Mana", "Health and mana tone volume", "HP MP 신호음 음량");
+    public static string OptRouteCues => Pick("Wegpunkt- und Ankunftston",
+                                              "Waypoint and arrival cues",
+                                              "경유지와 도착 알림음");
 
     // AoE-Warnung: die Lautstärke gab es als Konfigurationswert schon lange, aber
     // in keinem Menü - sie war damit nicht erreichbar. Der Klang kam 2026-08-21
     // auf Wunsch des Spielers dazu.
-    public static string OptAoeWarnVolume => IsGerman
-        ? "Lautstärke AoE-Warnung"
-        : "AoE warning volume";
+    public static string OptAoeWarnVolume => Pick("Lautstärke AoE-Warnung",
+                                                  "AoE warning volume",
+                                                  "장판 경고음 음량");
 
-    public static string OptAoeWarnTone => IsGerman
-        ? "Klang AoE-Warnung"
-        : "AoE warning sound";
+    public static string OptAoeWarnTone => Pick("Klang AoE-Warnung", "AoE warning sound", "장판 경고음");
 
     /// <summary>Name einer Warnton-Stimme, wie ihn die Auswahl vorliest.
     /// Beschreibend statt technisch: "300 Hertz mit Obertönen" sagt niemandem,
     /// wie etwas klingt.</summary>
     public static string AoeToneName(AoeWarnTone tone) => tone switch
     {
-        AoeWarnTone.Bright => IsGerman ? "Hell (bisheriger Klang)" : "Bright (previous sound)",
-        AoeWarnTone.Soft   => IsGerman ? "Weich" : "Soft",
-        AoeWarnTone.Deep   => IsGerman ? "Tiefes Brummen" : "Deep hum",
-        AoeWarnTone.Wave   => IsGerman ? "An- und abschwellend" : "Swelling",
-        _                  => IsGerman ? "Unbekannt" : "Unknown",
+        AoeWarnTone.Bright => Pick("Hell (bisheriger Klang)",
+                                   "Bright (previous sound)",
+                                   "맑은 소리 (이전 소리)"),
+        AoeWarnTone.Soft   => Pick("Weich", "Soft", "부드러운 소리"),
+        AoeWarnTone.Deep   => Pick("Tiefes Brummen", "Deep hum", "낮은 울림"),
+        AoeWarnTone.Wave   => Pick("An- und abschwellend", "Swelling", "물결"),
+        _                  => Pick("Unbekannt", "Unknown", "알 수 없음"),
     };
 
     /// <summary>Die Zeile, die das Untermenü öffnet: "Klang AoE-Warnung, Weich".</summary>
     public static string OptionChoice(string name, string value) =>
-        IsGerman ? $"{name}, {value}" : $"{name}, {value}";
+        Pick($"{name}, {value}", $"{name}, {value}", $"{name}, {value}");
 
     /// <summary>Bestätigung nach der Wahl eines Klangs.</summary>
     public static string AoeToneSet(string value) =>
-        IsGerman ? $"Warnton {value}." : $"Warning sound {value}.";
+        Pick($"Warnton {value}.", $"Warning sound {value}.", $"경고음 {value}.");
 
     // ── Warnstimme (zweiter Sprachkanal) ──────────────────────────────────────
     // Sie heißt im Menü nicht "SAPI": für den Spieler zählt, WAS sie tut - dass
     // die Kampfwarnungen an der Sprachausgabe vorbeigehen und dort nicht mehr
     // abgeschnitten werden können.
-    public static string OptWarningVoice => IsGerman
-        ? "Eigene Stimme für Kampfwarnungen"
-        : "Separate voice for combat warnings";
+    public static string OptWarningVoice => Pick("Eigene Stimme für Kampfwarnungen",
+                                                 "Separate voice for combat warnings",
+                                                 "전투 경고 전용 음성");
 
-    public static string OptWarningVoiceVolume => IsGerman
-        ? "Lautstärke Warnstimme"
-        : "Warning voice volume";
+    public static string OptWarningVoiceVolume => Pick("Lautstärke Warnstimme",
+                                                       "Warning voice volume",
+                                                       "경고 음성 음량");
 
-    public static string OptWarningVoiceRate => IsGerman
-        ? "Tempo Warnstimme"
-        : "Warning voice speed";
+    public static string OptWarningVoiceRate => Pick("Tempo Warnstimme",
+                                                     "Warning voice speed",
+                                                     "경고 음성 속도");
 
-    public static string OptWarningVoiceName => IsGerman
-        ? "Stimme für Kampfwarnungen"
-        : "Voice for combat warnings";
+    public static string OptWarningVoiceName => Pick("Stimme für Kampfwarnungen",
+                                                     "Voice for combat warnings",
+                                                     "전투 경고 음성");
 
     /// <summary>Der Satz, den eine Stimme zur Probe spricht. Eine echte Warnung
     /// und kein "Test eins zwei": beurteilt werden soll, ob man SIE im Kampf
     /// versteht.</summary>
-    public static string WarningVoiceSample => IsGerman
-        ? "Kegel von vorne. Nach rechts ausweichen, sieben Meter."
-        : "Cone from the front. Dodge right, seven metres.";
+    public static string WarningVoiceSample => Pick("Kegel von vorne. Nach rechts ausweichen, sieben Meter.",
+                                                    "Cone from the front. Dodge right, seven metres.",
+                                                    "앞쪽에서 부채꼴. 오른쪽으로 7미터 회피.");
 
     /// <summary>Steht in der Stimmenauswahl, wenn keine eigene gewählt ist.</summary>
-    public static string WarningVoiceAutomatic => IsGerman ? "Automatisch" : "Automatic";
+    public static string WarningVoiceAutomatic => Pick("Automatisch", "Automatic", "자동");
 
     /// <summary>Bestätigung nach der Wahl einer Stimme - nur nötig, wenn die
     /// Probe stumm blieb.</summary>
     public static string WarningVoiceSet(string value) =>
-        IsGerman ? $"Warnstimme {value}." : $"Warning voice {value}.";
+        Pick($"Warnstimme {value}.", $"Warning voice {value}.", $"경고 음성 {value}.");
 
     /// <summary>Steht statt der Auswahl, wenn das System gar keine Sprachausgabe
     /// anbietet. Eine leere Liste ohne Erklärung wäre von einem Fehler des
     /// Plugins nicht zu unterscheiden.</summary>
-    public static string WarningVoiceUnavailable => IsGerman
-        ? "Keine Sprachausgabe des Systems verfügbar. Die Kampfwarnungen kommen über den Screenreader."
-        : "No system speech available. Combat warnings go through the screen reader.";
+    public static string WarningVoiceUnavailable => Pick("Keine Sprachausgabe des Systems verfügbar. Die Kampfwarnungen kommen über den Screenreader.",
+                                                         "No system speech available. Combat warnings go through the screen reader.",
+                                                         "시스템 음성 없음. 전투 경고는 스크린 리더로 나감.");
 
     /// <summary>
     /// Die wählbaren Tempostufen der Warnstimme. SAPI kennt -10 bis 10; die
@@ -177,32 +188,34 @@ public static partial class AccessibilityStrings
     /// sagt niemandem, wie schnell das ist.</summary>
     public static string VoiceRateName(int rate) => rate switch
     {
-        <= -4 => IsGerman ? "Sehr langsam" : "Very slow",
-        -3 or -2 => IsGerman ? "Langsam" : "Slow",
-        -1 or 0 => IsGerman ? "Normal" : "Normal",
-        1 or 2 => IsGerman ? "Etwas schneller" : "Slightly faster",
-        3 or 4 => IsGerman ? "Schnell" : "Fast",
-        5 or 6 => IsGerman ? "Sehr schnell" : "Very fast",
-        _ => IsGerman ? "Am schnellsten" : "Fastest",
+        <= -4 => Pick("Sehr langsam", "Very slow", "매우 느림"),
+        -3 or -2 => Pick("Langsam", "Slow", "느림"),
+        -1 or 0 => Pick("Normal", "Normal", "보통"),
+        1 or 2 => Pick("Etwas schneller", "Slightly faster", "조금 빠름"),
+        3 or 4 => Pick("Schnell", "Fast", "빠름"),
+        5 or 6 => Pick("Sehr schnell", "Very fast", "매우 빠름"),
+        _ => Pick("Am schnellsten", "Fastest", "가장 빠름"),
     };
 
     /// <summary>Bestätigung nach der Wahl einer Tempostufe - nur nötig, wenn die
     /// Probe stumm blieb.</summary>
     public static string VoiceRateSet(string value) =>
-        IsGerman ? $"Tempo {value}." : $"Speed {value}.";
+        Pick($"Tempo {value}.", $"Speed {value}.", $"속도 {value}.");
 
-    public static string OptSkillReady => IsGerman ? "Fähigkeit bereit" : "Ability ready";
-    public static string OptSkillReadyVolume => IsGerman ? "Fähigkeit bereit Lautstärke" : "Ability ready volume";
-    public static string OptHeading => IsGerman ? "Himmelsrichtung" : "Compass heading";
-    public static string OptTargetChanges => IsGerman ? "Zielwechsel" : "Target changes";
-    public static string OptTargetHp => IsGerman ? "Ziel-Lebenspunkte" : "Target health";
-    public static string OptEnemyCast => IsGerman ? "Gegner wirkt Aktion" : "Enemy casting";
-    public static string OptFineHpDuringLeve => IsGerman
-        ? "Feine Ziel-Lebenspunkte im Freibrief"
-        : "Fine target health during levequests";
-    public static string OptMapFlag => IsGerman ? "Kartenmarkierung" : "Map flag";
-    public static string OptErrorToasts => IsGerman ? "Fehlermeldungen" : "Error messages";
-    public static string OptInfoToasts => IsGerman ? "Hinweismeldungen" : "Notice messages";
+    public static string OptSkillReady => Pick("Fähigkeit bereit", "Ability ready", "기술 준비됨");
+    public static string OptSkillReadyVolume => Pick("Fähigkeit bereit Lautstärke",
+                                                     "Ability ready volume",
+                                                     "기술 준비됨 음량");
+    public static string OptHeading => Pick("Himmelsrichtung", "Compass heading", "방향 안내");
+    public static string OptTargetChanges => Pick("Zielwechsel", "Target changes", "대상 변경");
+    public static string OptTargetHp => Pick("Ziel-Lebenspunkte", "Target health", "대상 HP");
+    public static string OptEnemyCast => Pick("Gegner wirkt Aktion", "Enemy casting", "적 기술 시전");
+    public static string OptFineHpDuringLeve => Pick("Feine Ziel-Lebenspunkte im Freibrief",
+                                                     "Fine target health during levequests",
+                                                     "길드 의뢰 중 대상 HP 자세히");
+    public static string OptMapFlag => Pick("Kartenmarkierung", "Map flag", "지도 표식");
+    public static string OptErrorToasts => Pick("Fehlermeldungen", "Error messages", "오류 메시지");
+    public static string OptInfoToasts => Pick("Hinweismeldungen", "Notice messages", "알림 메시지");
 
     // ── Namen der Puffer ──────────────────────────────────────────
     //
@@ -217,17 +230,17 @@ public static partial class AccessibilityStrings
     /// Spieler weitergeklickt hat, ein aus dem Chat gefüllter Dialogpuffer hinkte dem
     /// Bildschirm also immer einen Schritt hinterher. Gefüllt wird er statt dessen von
     /// den Talk- und _BattleTalk-Lesern.</summary>
-    public static string BufferDialogue => IsGerman ? "Dialoge" : "Dialogue";
+    public static string BufferDialogue => Pick("Dialoge", "Dialogue", "대화");
 
     /// <summary>Die eigenen Meldungen des Plugins - Toasts, Abmelde-Countdown,
     /// Fensteransagen. Die liefen nie über den Chatlog, also hält sie kein
     /// Register.</summary>
-    public static string BufferSystem => IsGerman ? "Meldungen" : "Notices";
+    public static string BufferSystem => Pick("Meldungen", "Notices", "알림");
 
     /// <summary>Der einzelne Sammelpuffer, der nur benutzt wird, solange die
     /// Chatfilter des Spiels nicht lesbar sind. Siehe
     /// <see cref="ChatFiltersUnavailable"/>.</summary>
-    public static string BufferChat => IsGerman ? "Chat" : "Chat";
+    public static string BufferChat => Pick("Chat", "Chat", "로그");
 
     /// <summary>
     /// Ein ganzes Chat-Register in Ankunftsreihenfolge - das, was ein sehender Spieler
@@ -245,7 +258,7 @@ public static partial class AccessibilityStrings
     /// GRUPPIERUNG vom Plugin kommt. Der INHALT nicht: eine Zeile liegt genau dann
     /// hier, wenn die Filterdaten des Spiels sagen, dass dieses Register sie zeigt.
     /// </summary>
-    public static string BufferTabAll => IsGerman ? "Alles" : "All";
+    public static string BufferTabAll => Pick("Alles", "All", "전체");
 
     /// <summary>
     /// Wird EINMAL gesagt, wenn der Filterzustand des Spiels nicht gelesen werden kann.
@@ -255,8 +268,9 @@ public static partial class AccessibilityStrings
     /// nicht still.
     /// </summary>
     public static string ChatFiltersUnavailable =>
-        IsGerman ? "Die Chat-Einstellungen des Spiels sind nicht lesbar. Der Chat läuft in einem Puffer."
-                 : "The game's chat settings cannot be read. Chat is going to one buffer.";
+        Pick("Die Chat-Einstellungen des Spiels sind nicht lesbar. Der Chat läuft in einem Puffer.",
+             "The game's chat settings cannot be read. Chat is going to one buffer.",
+             "게임의 로그 필터 설정을 읽을 수 없음. 로그가 갈래 없이 한 곳으로 모임.");
 
     // ── Register wechseln, und was im neuen Register liegt ────────
 
@@ -272,21 +286,23 @@ public static partial class AccessibilityStrings
     /// zwei Puffern; "vierzig" würde eine Filterliste beschreiben und keinen Verlauf.
     /// </summary>
     public static string ChatTabEntered(string tab, int buffers, string first, int count) =>
-        IsGerman ? $"{tab}, {buffers} Puffer. {first}, {count}."
-                 : $"{tab}, {buffers} buffers. {first}, {count}.";
+        Pick($"{tab}, {buffers} Puffer. {first}, {count}.",
+             $"{tab}, {buffers} buffers. {first}, {count}.",
+             $"{tab}, 읽을 로그 {buffers}갈래. {first}, {count}.");
 
     /// <summary>Wird gesagt, wenn die Registertaste den Chatlog des Spiels gar nicht
     /// erreicht. Nie Stille: der Spieler hätte sonst keine Möglichkeit, ein fehlendes
     /// Fenster von einer kaputten Taste zu unterscheiden.</summary>
     public static string ChatTabUnavailable =>
-        IsGerman ? "Das Chatfenster ist nicht erreichbar."
-                 : "The chat window cannot be reached.";
+        Pick("Das Chatfenster ist nicht erreichbar.",
+             "The chat window cannot be reached.",
+             "로그창에 접근할 수 없음.");
 
     // ── Einstellungen: eine Sprachschaltung je Chat-Register ──────
 
     /// <summary>Benannt nach dem, was das Spiel hat, denn genau das sind die Zeilen
     /// darunter: eine je Chat-Register, unter dem Namen des Registers selbst.</summary>
-    public static string OptionsChatTabs => IsGerman ? "Chat-Register" : "Chat tabs";
+    public static string OptionsChatTabs => Pick("Chat-Register", "Chat tabs", "로그 탭");
 
     /// <summary>
     /// Die oberste Zeile im Untermenü eines Registers: wird dieses Register vorgelesen.
@@ -301,13 +317,13 @@ public static partial class AccessibilityStrings
     /// was verstummt, und das ist genau die Zweideutigkeit, die hier zu vermeiden ist.
     /// </summary>
     public static string OptChatTabMaster =>
-        IsGerman ? "Register vorlesen" : "Read tab aloud";
+        Pick("Register vorlesen", "Read tab aloud", "탭 읽어 주기");
 
     /// <summary>Die Gruppenzeile im Untermenü eines Kanals - die ganze Akteursgruppe
     /// auf einmal, über den Kästchen, in die das Spiel sie aufteilt. Gleiche
     /// Wortregel wie bei <see cref="OptChatTabMaster"/>.</summary>
     public static string OptChatChannelAll =>
-        IsGerman ? "Ganze Gruppe vorlesen" : "Read whole group aloud";
+        Pick("Ganze Gruppe vorlesen", "Read whole group aloud", "채널 묶음 전체 읽어 주기");
 
     /// <summary>
     /// Die eine Schaltung für Zeilen, für die die Filterliste des Spiels gar kein
@@ -319,14 +335,18 @@ public static partial class AccessibilityStrings
     /// unten in der Registerliste, weil sie zu keinem Register gehört.
     /// </summary>
     public static string OptChatUnfiltered =>
-        IsGerman ? "Meldungen ohne Spielfilter vorlesen" : "Read lines the game cannot filter";
+        Pick("Meldungen ohne Spielfilter vorlesen",
+             "Read lines the game cannot filter",
+             "게임 로그 필터로 거를 수 없는 메시지 읽어 주기");
 
     /// <summary>Die Zeile, wenn die Register nicht lesbar sind - eine Schaltung für den
     /// einen Sammelpuffer. Ein Abschnitt, der seinen Namen nennt und dann nichts
     /// anbietet, liest sich wie ein Fehler; also sagt er statt dessen, in welchem
     /// Zustand er ist.</summary>
     public static string OptChatFallback =>
-        IsGerman ? "Chat vorlesen (Register nicht lesbar)" : "Read chat aloud (tabs unreadable)";
+        Pick("Chat vorlesen (Register nicht lesbar)",
+             "Read chat aloud (tabs unreadable)",
+             "로그 읽어 주기 (탭을 읽을 수 없음)");
 
     // ── Einstellungen: die Kanäle des GEWOHNTEN Chatsystems ───────
 
@@ -334,13 +354,13 @@ public static partial class AccessibilityStrings
     /// der im neuen <see cref="OptionsChatTabs"/> steht. "Kanäle" und nicht
     /// "Register", weil das alte System keine Register kennt: seine Einteilung ist
     /// die feste Kategorienliste, die der Spieler auch beim Nachlesen hört.</summary>
-    public static string OptionsChatChannels => IsGerman ? "Chat-Kanäle" : "Chat channels";
+    public static string OptionsChatChannels => Pick("Chat-Kanäle", "Chat channels", "로그 채널");
 
     /// <summary>Die Sammel-Rückmeldungen beim Abbauen (XivChatType.Gathering). Sie
     /// haben einen eigenen Schalter, landen in der Nachlese aber unter "System" -
     /// deshalb ist dies der einzige Kanalname dieses Abschnitts, der nicht aus
     /// <see cref="AccessibilityStrings.LegacyChatCategoryName"/> kommen kann.</summary>
-    public static string OptChatGathering => IsGerman ? "Sammeln" : "Gathering";
+    public static string OptChatGathering => Pick("Sammeln", "Gathering", "채집");
 
     /// <summary>
     /// Hängt sich an die Bestätigung, wenn ein Kanal ABGESCHALTET wird ("Gruppe aus.
@@ -352,6 +372,7 @@ public static partial class AccessibilityStrings
     /// im Weg.
     /// </summary>
     public static string ChatChannelStillArchived =>
-        IsGerman ? "Steht weiter zum Nachlesen bereit."
-                 : "Still available in the history.";
+        Pick("Steht weiter zum Nachlesen bereit.",
+             "Still available in the history.",
+             "로그에는 그대로 남음.");
 }
