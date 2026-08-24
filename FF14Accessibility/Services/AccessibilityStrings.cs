@@ -1529,7 +1529,7 @@ public static partial class AccessibilityStrings
     // GP (Sammelpunkte) - the DE client says "SP", the EN client "GP".
     public static string NoGatheringPoints => Pick("Keine Sammelpunkte. SP gibt es nur als Sammler.",
                                                    "No gathering points. GP only exists for gatherers.",
-                                                   "지금 직업에는 GP가 없음. GP는 채집가에게만 있음.");
+                                                   "현재 직업에는 GP가 없음. GP는 채집가에게만 있음.");
     public static string GpValue(uint cur, uint max) =>
         Pick($"SP {Percent(cur, max)} Prozent.",
              $"GP {Percent(cur, max)} percent.",
@@ -1903,7 +1903,7 @@ public static partial class AccessibilityStrings
     public static string NoGatheringSpotsJob =>
         Pick("Keine Sammelstellen für deinen Beruf in dieser Zone.",
              "No gathering spots for your job in this area.",
-             "이 지역에 지금 직업으로 채집할 곳 없음.");
+             "이 지역에 현재 직업으로 채집할 곳 없음.");
     public static string GatheringSpotName(int level) =>
         Pick($"Sammelstelle, Stufe {level}", $"Gathering spot, level {level}", $"채집 지점, 레벨 {level}");
 
@@ -2307,7 +2307,7 @@ public static partial class AccessibilityStrings
         : $"{number}: {name}, {MetersRemaining(length)}, {(bothWays ? "both ways" : "one way only")}.";
     public static string TrailUnknownNumber => Pick("Diese Nummer gibt es hier nicht.",
                                                     "No trail with that number here.",
-                                                    "그 번호의 발자취는 여기 없음.");
+                                                    "그 번호 발자취는 여기 없음.");
     public static string TrailDeleted(string name) => Pick($"Spur geloescht: {name}.",
                                                            $"Trail deleted: {name}.",
                                                            $"발자취 삭제됨: {name}.");
