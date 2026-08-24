@@ -173,7 +173,7 @@ public static partial class AccessibilityStrings
     /// Plugins nicht zu unterscheiden.</summary>
     public static string WarningVoiceUnavailable => Pick("Keine Sprachausgabe des Systems verfügbar. Die Kampfwarnungen kommen über den Screenreader.",
                                                          "No system speech available. Combat warnings go through the screen reader.",
-                                                         "시스템 음성 없음. 전투 경고는 스크린 리더로 나감.");
+                                                         "시스템 음성 없음. 전투 경고는 스크린 리더로 출력.");
 
     /// <summary>
     /// Die wählbaren Tempostufen der Warnstimme. SAPI kennt -10 bis 10; die

@@ -1156,7 +1156,7 @@ public static partial class AccessibilityStrings
                   "소지품에 맞는 아이템 없음."),
         1 => Pick($"Ein passender Gegenstand: {items[0]}. Auswählen und dann Übergeben drücken.",
                   $"One matching item: {items[0]}. Select it, then press Hand Over.",
-                  $"맞는 아이템 하나: {items[0]}. 고른 다음 건네주기를 누른다."),
+                  $"맞는 아이템 하나: {items[0]}. 선택한 다음 건네주기 누르기."),
         _ => Loc.IsKorean
                 ? $"맞는 아이템 {items.Count}개: {string.Join(", ", items)}. 하나 고른 다음 건네주기를 누른다."
                 : IsGerman
@@ -2207,7 +2207,7 @@ public static partial class AccessibilityStrings
     public static string WalkMeshEndsHere(float distance, string direction) =>
         Pick($"Weiter komme ich nicht, hier endet der begehbare Weg. Noch {MetersRemaining(distance)} nach {direction}.",
              $"This is as far as the walkable path goes. {MetersRemaining(distance)} to the {direction}.",
-             $"더 못 간다. 걸어갈 수 있는 길이 여기서 끝난다. {direction} 방향으로 {MetersRemaining(distance)} 남음.");
+             $"걸어갈 수 있는 길이 여기서 끝남. {direction} 방향으로 {MetersRemaining(distance)} 남음.");
     /// <summary>Refuses a walk that would not move the character at all.</summary>
     public static string AlreadyAtTarget(string name) =>
         Pick($"Du bist schon bei {name}.", $"You are already at {name}.", $"이미 {name}에 있음.");
@@ -2275,7 +2275,7 @@ public static partial class AccessibilityStrings
     // ════════════════════════════════════════════════════════════════
     public static string TrailRecordingStarted => Pick("Spur wird aufgezeichnet. Lauf die Stelle jetzt ab und drueck die Taste am Ende noch einmal.",
                                                        "Recording a trail. Walk the stretch now and press the key again at the end.",
-                                                       "발자취 기록 시작. 지금 그 구간을 걸어가고, 끝에서 같은 키를 다시 누른다.");
+                                                       "발자취 기록 시작. 그 구간을 걸어간 다음 끝에서 같은 키 다시 누르기.");
     public static string TrailRecordingCancelledZone => Pick("Spur verworfen, du hast das Gebiet verlassen.",
                                                              "Trail discarded, you left the area.",
                                                              "지역을 벗어나서 발자취를 버림.");
@@ -2313,14 +2313,14 @@ public static partial class AccessibilityStrings
                                                            $"발자취 지움: {name}.");
     public static string TrailCommandHelp => Pick("Sag Schrägstrich acc trails zum Auflisten, oder Schrägstrich acc trail del und die Nummer zum Löschen.",
                                                   "Use slash acc trails to list them, or slash acc trail del and the number to delete one.",
-                                                  "슬래시 acc trails로 목록을 보고, 슬래시 acc trail del과 번호로 지운다.");
+                                                  "목록은 슬래시 acc trails, 삭제는 슬래시 acc trail del과 번호.");
     /// <summary>The auto-walk ran out of mesh and is taking a recorded trail.</summary>
     public static string TrailTaking(string name) => Pick($"Hier endet das Wegenetz, ich nehme {name}.",
                                                           $"The navmesh ends here; taking {name}.",
-                                                          $"여기서 길 정보가 끝난다. 이제 발자취 {name} 따라간다.");
+                                                          $"여기서 길 정보 끝남. 발자취 {name} 따라감.");
     public static string TrailFinished => Pick("Spur zu Ende, ich laufe normal weiter.",
                                                "End of the trail, continuing normally.",
-                                               "발자취 끝. 이제부터는 평소대로 이동한다.");
+                                               "발자취 끝. 이제부터는 평소대로 이동함.");
     /// <summary>Crossing a measured gap in the mesh (MeshBridgeService). Named
     /// separately from a recorded trail because the player did not record it and
     /// would otherwise wonder which trail is meant.</summary>
@@ -2371,7 +2371,7 @@ public static partial class AccessibilityStrings
     public static string GuideMeshEndsHere(float distance, string direction) =>
         Pick($"Hier endet der begehbare Weg. Noch {MetersRemaining(distance)} nach {direction}, ich führe ab jetzt in Luftlinie.",
              $"This is where the walkable path ends. {MetersRemaining(distance)} to the {direction}; guiding in a straight line from here.",
-             $"걸어갈 수 있는 길이 여기서 끝난다. {direction} 방향으로 {MetersRemaining(distance)} 남았고, 여기부터는 직선으로 안내한다.");
+             $"걸어갈 수 있는 길이 여기서 끝남. {direction} 방향으로 {MetersRemaining(distance)} 남음. 여기부터는 직선으로 안내함.");
 
     // ════════════════════════════════════════════════════════════════
     //  HotbarService - Aktionsleiste & Skill-Browser
@@ -3188,7 +3188,7 @@ public static partial class AccessibilityStrings
     public static string CharaMakeAuthoredNote =>
         Pick("Die Bildbeschreibungen stammen vom Mod, nicht vom Spiel.",
              "The picture descriptions come from the mod, not from the game.",
-             "그림 설명은 게임이 아니라 모드가 쓴 것이다.");
+             "그림 설명은 게임이 아니라 모드가 작성한 것임.");
 
     /// <summary>
     /// Was Eintrag 1 eines Typ-0-Form-Menues IST. User: *"every type 1 ... had no
