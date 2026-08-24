@@ -688,7 +688,7 @@ public static partial class AccessibilityStrings
     // dahinter bekommt hier seine Worte.
 
     public static string NoActiveTasks =>
-        Pick("Keine laufende Aufgabe.", "No task running.", "진행 중인 달성 조건 없음.");
+        Pick("Keine laufende Aufgabe.", "No task running.", "달성 조건 없음.");
 
     /// <summary>Header before a director's lines: its own name.</summary>
     public static string TasksOf(string title) =>
@@ -1087,7 +1087,7 @@ public static partial class AccessibilityStrings
     public static string InputEmpty => Pick("leer", "empty", "비어 있음");
     public static string Deleted(string removed) => Pick($"{removed} gelöscht",
                                                          $"{removed} deleted",
-                                                         $"{removed} 지움");
+                                                         $"{removed} 삭제됨");
 
     // ── Benachrichtigung (ActivateNotification) ──────────────────────
     public static string NoOpenNotification => Pick("Keine offene Benachrichtigung.",
@@ -1416,10 +1416,10 @@ public static partial class AccessibilityStrings
     public static string CombatEnd => Pick("Kampf vorbei.", "Combat over.", "전투 끝.");
     public static string AoeWarningOn  => Pick("Flächenwarnung an.",
                                                "Area warning on.",
-                                               "범위 경고 켜짐.");
+                                               "장판 경고 켜짐.");
     public static string AoeWarningOff => Pick("Flächenwarnung aus.",
                                                "Area warning off.",
-                                               "범위 경고 꺼짐.");
+                                               "장판 경고 꺼짐.");
 
     /// <summary>
     /// Bar fill as a whole percent - the same reading a sighted player takes off
@@ -1589,7 +1589,7 @@ public static partial class AccessibilityStrings
     public static string AoeStandingInIt(float seconds) =>
         Pick($"Du stehst drin, {AoeSeconds(seconds)}.",
              $"You are in it, {AoeSeconds(seconds)}.",
-             $"범위 안에 있음, {AoeSeconds(seconds)}.");
+             $"장판 안에 있음, {AoeSeconds(seconds)}.");
 
     /// <summary>Der Spieler ist WÄHREND eines laufenden Casts in die Fläche
     /// hineingelaufen. Eigener Satz mit "Achtung", weil hier keine Cast-Ansage
@@ -1597,7 +1597,7 @@ public static partial class AccessibilityStrings
     public static string AoeEnteredZone(float seconds) =>
         Pick($"Achtung, du stehst drin, {AoeSeconds(seconds)}.",
              $"Careful, you are in it, {AoeSeconds(seconds)}.",
-             $"주의, 범위 안에 있음, {AoeSeconds(seconds)}.");
+             $"주의, 장판 안에 있음, {AoeSeconds(seconds)}.");
 
     /// <summary>
     /// Wohin man ausweichen kann — die Richtung, die ein sehender Spieler in
@@ -2076,7 +2076,7 @@ public static partial class AccessibilityStrings
              "No target to follow. Select a target first.",
              "따라갈 대상 없음. 먼저 대상 지정 필요.");
     public static string FollowSelf =>
-        Pick("Das bist du selbst.", "That is you.", "대상이 나 자신이라 따라갈 수 없음.");
+        Pick("Das bist du selbst.", "That is you.", "대상이 나 자신임. 따라갈 수 없음.");
     public static string Following(string name) =>
         Pick($"Folge {name}.", $"Following {name}.", $"{name} 따라가는 중.");
     public static string FollowStopped =>
@@ -2278,7 +2278,7 @@ public static partial class AccessibilityStrings
                                                        "발자취 기록 시작. 그 구간을 걸어간 다음 끝에서 같은 키 다시 누르기.");
     public static string TrailRecordingCancelledZone => Pick("Spur verworfen, du hast das Gebiet verlassen.",
                                                              "Trail discarded, you left the area.",
-                                                             "지역을 벗어나서 발자취를 버림.");
+                                                             "지역을 벗어나 발자취 기록 취소됨.");
     public static string TrailTooShort => Pick("Zu kurz, keine Spur gespeichert.",
                                                "Too short, no trail saved.",
                                                "너무 짧아 발자취를 저장하지 않음.");
@@ -2310,7 +2310,7 @@ public static partial class AccessibilityStrings
                                                     "그 번호의 발자취는 여기 없음.");
     public static string TrailDeleted(string name) => Pick($"Spur geloescht: {name}.",
                                                            $"Trail deleted: {name}.",
-                                                           $"발자취 지움: {name}.");
+                                                           $"발자취 삭제됨: {name}.");
     public static string TrailCommandHelp => Pick("Sag Schrägstrich acc trails zum Auflisten, oder Schrägstrich acc trail del und die Nummer zum Löschen.",
                                                   "Use slash acc trails to list them, or slash acc trail del and the number to delete one.",
                                                   "목록은 슬래시 acc trails, 삭제는 슬래시 acc trail del과 번호.");
@@ -2326,7 +2326,7 @@ public static partial class AccessibilityStrings
     /// would otherwise wonder which trail is meant.</summary>
     public static string BridgeCrossing(string name) => Pick($"Das Wegenetz hat hier eine Luecke, ich gehe ueber {name}.",
                                                              $"There is a gap in the navmesh here; crossing at {name}.",
-                                                             $"여기 길 정보에 틈 있음. {name} 거쳐 감.");
+                                                             $"여기 길 정보가 끊김. {name} 거쳐 감.");
     /// <summary>The push into a zone line achieved nothing. Says what is true -
     /// something is in the way - rather than leaving the player guessing why
     /// nothing happened.</summary>
@@ -2402,7 +2402,7 @@ public static partial class AccessibilityStrings
              "No target slot selected. Select the target slot first.",
              "배정할 키를 안 골랐음. 먼저 배정할 키 선택 필요.");
     public static string AssignFailed =>
-        Pick("Belegen fehlgeschlagen.", "Assignment failed.", "단축바에 올리지 못했음.");
+        Pick("Belegen fehlgeschlagen.", "Assignment failed.", "배정 실패.");
     public static string SkillAssigned(string name, string slotLabel) =>
         Pick($"{name} liegt jetzt auf {slotLabel}.",
              $"{name} is now on {slotLabel}.",
@@ -2410,7 +2410,7 @@ public static partial class AccessibilityStrings
     public static string AssignFailedNoChange =>
         Pick("Belegen fehlgeschlagen, die Taste hat sich nicht geändert.",
              "Assignment failed, the key did not change.",
-             "단축바에 올리지 못했음. 키가 그대로임.");
+             "배정 실패. 키가 그대로임.");
     public static string PlayerDataNotReady =>
         Pick("Spielerdaten noch nicht bereit.", "Player data not ready yet.", "플레이어 정보가 아직 준비 안 됨.");
     public static string NoSkillsFound =>
@@ -2575,20 +2575,20 @@ public static partial class AccessibilityStrings
     public static string GroundProbeUnavailable =>
         Pick("Die Kollisionsabfrage des Spiels ist nicht erreichbar.",
              "The game's collision query is unavailable.",
-             "게임의 충돌 판정을 쓸 수 없음.");
+             "게임의 지형 판정을 사용할 수 없음.");
 
     /// <summary>Result of the ground probe: how much floor was found and how
     /// much of it the navigation mesh does not cover.</summary>
     public static string GroundProbeResult(int hits, int withoutMesh) =>
         Pick($"Bodenmessung fertig. {hits} Treffer, davon {withoutMesh} ohne Wegenetz.",
              $"Ground probe done. {hits} hits, {withoutMesh} of them without navigation mesh.",
-             $"바닥 측정 완료. 바닥이 {hits}군데 잡혔고, 그중 {withoutMesh}군데는 길 정보 없음.");
+             $"바닥 측정 완료. {hits}군데 잡힘, 그중 {withoutMesh}군데는 길 정보 없음.");
 
     /// <summary>The crossing was surveyed for one zone only and we are elsewhere.</summary>
     public static string GapCrossWrongZone =>
         Pick("Diesen Übergang gibt es nur auf den Unteren Decks.",
              "This crossing only exists on the Lower Decks.",
-             "이 건너기는 하층 갑판에서만 할 수 있다. 지금은 다른 지역이다.");
+             "건너는 지점은 하층 갑판에만 있음. 지금은 다른 지역임.");
 
     /// <summary>Neither side of the gap can be walked to from where we stand.</summary>
     public static string GapCrossNoSide =>
@@ -2705,7 +2705,7 @@ public static partial class AccessibilityStrings
     public static string PluginSettingsOpened(string name) =>
         Pick($"Einstellungen von {name} geöffnet. Das Fenster ist nicht vorlesbar.",
              $"Opened settings of {name}. The window cannot be read aloud.",
-             $"{name} 설정을 열었음. 그 창은 읽어 줄 수 없음.");
+             $"{name} 설정 열림. 그 창은 읽어 줄 수 없음.");
     public static string PluginSettingsCantOpen(string name) =>
         Pick($"Einstellungen von {name} lassen sich nicht öffnen.",
              $"Cannot open settings of {name}.",
@@ -2905,7 +2905,7 @@ public static partial class AccessibilityStrings
 
     /// <summary>Menu row that switches between the two chat systems.</summary>
     public static string OptChatSystem =>
-        Pick("Chatsystem", "Chat system", "로그 시스템");
+        Pick("Chatsystem", "Chat system", "대화 시스템");
 
     /// <summary>The old system's name, as the player knows it from v5.83.</summary>
     public static string ChatSystemLegacyName =>
@@ -2919,7 +2919,7 @@ public static partial class AccessibilityStrings
     public static string OptChatSystemRow(bool legacy) =>
         Pick($"Chatsystem: {(legacy ? ChatSystemLegacyName : ChatSystemNewName)}",
              $"Chat system: {(legacy ? ChatSystemLegacyName : ChatSystemNewName)}",
-             $"로그 시스템: {(legacy ? ChatSystemLegacyName : ChatSystemNewName)}");
+             $"대화 시스템: {(legacy ? ChatSystemLegacyName : ChatSystemNewName)}");
 
     /// <summary>Spoken the moment the switch is flipped. Says that nothing was
     /// lost, because that is the first thing a player wonders about a buffer
@@ -2927,7 +2927,7 @@ public static partial class AccessibilityStrings
     public static string ChatSystemSwitched(bool legacy) =>
         Pick($"Chatsystem {(legacy ? ChatSystemLegacyName : ChatSystemNewName)}. Beide Nachlesen laufen mit, es ist nichts verloren.",
              $"Chat system {(legacy ? ChatSystemLegacyName : ChatSystemNewName)}. Both histories keep recording, nothing was lost.",
-             $"로그 시스템 {(legacy ? ChatSystemLegacyName : ChatSystemNewName)}. 두 기록 다 계속 쌓이고, 잃은 것 없음.");
+             $"대화 시스템 {(legacy ? ChatSystemLegacyName : ChatSystemNewName)}. 두 기록 다 계속 쌓여서 놓친 것 없음.");
 
     /// <summary>Spoken when a key belonging to the OTHER system is pressed.
     /// Silence would read as a broken key - the player cannot see that the key
@@ -2935,7 +2935,7 @@ public static partial class AccessibilityStrings
     public static string ChatKeyOnlyInNewSystem =>
         Pick("Diese Taste gehört zum neuen Chatsystem.",
              "That key belongs to the new chat system.",
-             "이 키는 신규 로그 시스템 전용이라 지금은 쓸 수 없음.");
+             "이 키는 신규 대화 시스템 전용이라 지금은 사용할 수 없음.");
 
     public static string CategoryEmpty(string category) =>
         Pick($"{category}, leer", $"{category}, empty", $"{category}, 비어 있음");
@@ -2975,7 +2975,7 @@ public static partial class AccessibilityStrings
         // says everything "Chat von ..." would have said, only shorter.
         XivChatType.NPCDialogue   => "",
         XivChatType.NPCDialogueAnnouncements => "",
-        _                         => Pick("Chat", "Chat", "로그"),
+        _                         => Pick("Chat", "Chat", "대화"),
     };
 
     /// <summary>Prefix for the player's OWN messages ("You say: ...").</summary>
@@ -3114,7 +3114,7 @@ public static partial class AccessibilityStrings
              $"데이터 센터 선택. 지역: {regions}");
 
     // ── Gil-Depot (Bank / Gehilfen-Truhe) ───────────────────────────
-    public static string BankTitle    => Pick("Gil-Depot", "Gil storage", "길 보관함");
+    public static string BankTitle    => Pick("Gil-Depot", "Gil storage", "길 주고받기");
     public static string BankDeposit  => Pick("Hinterlegen", "Deposit", "맡기기");
     public static string BankWithdraw => Pick("Entnehmen", "Withdraw", "찾기");
     public static string BankAmount(string amount) =>

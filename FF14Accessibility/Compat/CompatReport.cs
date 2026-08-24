@@ -64,11 +64,11 @@ internal static class CompatReport
             if (NodeVisibilityCompat.Source == CompatSource.Emulated)
                 notes.Add(Loc.Pick("Sichtbarkeit von Elementen wird nachgebildet.",
                                    "Element visibility is emulated.",
-                                   "화면 요소가 보이는지를 모드가 대신 판정함."));
+                                   "화면 요소가 보이는지 모드가 대신 계산함."));
             if (GearsetMarkCompat.AnswersByItemId)
                 notes.Add(Loc.Pick("Ausrüstungsset-Markierung geht nach Gegenstands-ID.",
                                    "Gearset marks go by item ID.",
-                                   "장비세트에 든 것인지를 아이템 ID로만 판정함."));
+                                   "장비세트 표시는 아이템 ID로 판정함."));
 
             if (notes.Count == 0) return null;
             var prefix = Loc.Pick("Kompatibilitätshinweis: ", "Compatibility note: ", "호환성 안내: ");

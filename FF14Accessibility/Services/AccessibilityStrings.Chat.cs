@@ -240,7 +240,7 @@ public static partial class AccessibilityStrings
     /// <summary>Der einzelne Sammelpuffer, der nur benutzt wird, solange die
     /// Chatfilter des Spiels nicht lesbar sind. Siehe
     /// <see cref="ChatFiltersUnavailable"/>.</summary>
-    public static string BufferChat => Pick("Chat", "Chat", "로그");
+    public static string BufferChat => Pick("Chat", "Chat", "대화");
 
     /// <summary>
     /// Ein ganzes Chat-Register in Ankunftsreihenfolge - das, was ein sehender Spieler
@@ -270,7 +270,7 @@ public static partial class AccessibilityStrings
     public static string ChatFiltersUnavailable =>
         Pick("Die Chat-Einstellungen des Spiels sind nicht lesbar. Der Chat läuft in einem Puffer.",
              "The game's chat settings cannot be read. Chat is going to one buffer.",
-             "게임의 로그 필터 설정을 읽을 수 없음. 로그가 갈래 없이 한 곳으로 모임.");
+             "게임의 대화창 설정을 읽을 수 없음. 대화가 한 곳으로만 모임.");
 
     // ── Register wechseln, und was im neuen Register liegt ────────
 
@@ -288,7 +288,7 @@ public static partial class AccessibilityStrings
     public static string ChatTabEntered(string tab, int buffers, string first, int count) =>
         Pick($"{tab}, {buffers} Puffer. {first}, {count}.",
              $"{tab}, {buffers} buffers. {first}, {count}.",
-             $"{tab}, 읽을 로그 {buffers}갈래. {first}, {count}.");
+             $"{tab}, 읽을 기록 {buffers}개. {first}, {count}.");
 
     /// <summary>Wird gesagt, wenn die Registertaste den Chatlog des Spiels gar nicht
     /// erreicht. Nie Stille: der Spieler hätte sonst keine Möglichkeit, ein fehlendes
@@ -296,13 +296,13 @@ public static partial class AccessibilityStrings
     public static string ChatTabUnavailable =>
         Pick("Das Chatfenster ist nicht erreichbar.",
              "The chat window cannot be reached.",
-             "로그창에 접근할 수 없음.");
+             "대화창을 사용할 수 없음.");
 
     // ── Einstellungen: eine Sprachschaltung je Chat-Register ──────
 
     /// <summary>Benannt nach dem, was das Spiel hat, denn genau das sind die Zeilen
     /// darunter: eine je Chat-Register, unter dem Namen des Registers selbst.</summary>
-    public static string OptionsChatTabs => Pick("Chat-Register", "Chat tabs", "로그 탭");
+    public static string OptionsChatTabs => Pick("Chat-Register", "Chat tabs", "대화 탭");
 
     /// <summary>
     /// Die oberste Zeile im Untermenü eines Registers: wird dieses Register vorgelesen.
@@ -346,7 +346,7 @@ public static partial class AccessibilityStrings
     public static string OptChatFallback =>
         Pick("Chat vorlesen (Register nicht lesbar)",
              "Read chat aloud (tabs unreadable)",
-             "로그 읽어 주기 (탭을 읽을 수 없음)");
+             "대화 읽어 주기 (탭을 읽을 수 없음)");
 
     // ── Einstellungen: die Kanäle des GEWOHNTEN Chatsystems ───────
 
@@ -354,7 +354,7 @@ public static partial class AccessibilityStrings
     /// der im neuen <see cref="OptionsChatTabs"/> steht. "Kanäle" und nicht
     /// "Register", weil das alte System keine Register kennt: seine Einteilung ist
     /// die feste Kategorienliste, die der Spieler auch beim Nachlesen hört.</summary>
-    public static string OptionsChatChannels => Pick("Chat-Kanäle", "Chat channels", "로그 채널");
+    public static string OptionsChatChannels => Pick("Chat-Kanäle", "Chat channels", "대화 채널");
 
     /// <summary>Die Sammel-Rückmeldungen beim Abbauen (XivChatType.Gathering). Sie
     /// haben einen eigenen Schalter, landen in der Nachlese aber unter "System" -
@@ -374,5 +374,5 @@ public static partial class AccessibilityStrings
     public static string ChatChannelStillArchived =>
         Pick("Steht weiter zum Nachlesen bereit.",
              "Still available in the history.",
-             "로그에는 그대로 남음.");
+             "대화 기록에는 그대로 남음.");
 }
