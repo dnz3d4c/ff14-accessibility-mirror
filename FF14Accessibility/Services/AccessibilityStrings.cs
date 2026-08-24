@@ -271,7 +271,7 @@ public static partial class AccessibilityStrings
              $"초점 받은 창 없음. 보이는 창 {visibleCount}개, 전체 목록은 로그에.");
 
     public static string UiManagerUnavailable =>
-        Pick("Fenster-Liste nicht verfügbar.", "Window list not available.", "창 목록을 가져올 수 없음.");
+        Pick("Fenster-Liste nicht verfügbar.", "Window list not available.", "창 목록을 읽을 수 없음.");
 
     public static string DumpSaved(int addonCount, int nodeCount) =>
         Pick($"UI Dump auf Desktop gespeichert. {addonCount} Fenster, {nodeCount} Nodes.",
@@ -2713,7 +2713,7 @@ public static partial class AccessibilityStrings
              $"Cannot open settings of {name}.",
              $"{name} 설정을 열 수 없음.");
     public static string PluginListUnavailable =>
-        Pick("Plugin-Liste nicht verfügbar.", "Plugin list not available.", "플러그인 목록을 불러오지 못함.");
+        Pick("Plugin-Liste nicht verfügbar.", "Plugin list not available.", "플러그인 목록을 읽을 수 없음.");
     public static string NoPluginsInstalled =>
         Pick("Keine Plugins installiert.", "No plugins installed.", "설치된 플러그인 없음.");
     // Plugin-Zustandswörter (Describe / BuildOverview)
