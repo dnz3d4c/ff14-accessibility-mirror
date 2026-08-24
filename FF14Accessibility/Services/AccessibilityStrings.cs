@@ -32,7 +32,7 @@ public static partial class AccessibilityStrings
                                                   "위아래 화살표는 항목 이동, 엔터는 확인, 이스케이프는 뒤로, 컨트롤 F1은 도움말.");
 
     public static string Confirmed(string item) =>
-        Pick($"Auswahl bestätigt: {item}", $"Confirmed: {item}", $"선택함: {item}");
+        Pick($"Auswahl bestätigt: {item}", $"Confirmed: {item}", $"선택 확정: {item}");
 
     public static string MenuPosition(string item, int index, int count) =>
         Pick($"{item}, {index} von {count}",
@@ -106,7 +106,7 @@ public static partial class AccessibilityStrings
     public static string SwitchControl => Pick("Schalter", "switch", "스위치");
     /// <summary>Control is greyed out / not currently changeable (NodeFlags.Enabled
     /// cleared) - e.g. a sub-toggle while its master switch is off.</summary>
-    public static string StateDisabled => Pick("ausgegraut", "greyed out", "사용 불가");
+    public static string StateDisabled => Pick("ausgegraut", "greyed out", "선택 불가");
 
     // ── Einstellungen der Inhaltssuche (ContentsFinderSetting) ───────
     /// <summary>The four language boxes of the duty-finder settings. Named by
@@ -145,7 +145,7 @@ public static partial class AccessibilityStrings
     public static string LanguageUsage =>
         Pick("Sprache wählen mit: /acc lang de, /acc lang en, /acc lang ko oder /acc lang auto.",
              "Choose a language with: /acc lang de, /acc lang en, /acc lang ko or /acc lang auto.",
-             "언어를 고르려면 /acc lang ko, /acc lang en, /acc lang de, /acc lang auto 중 하나를 입력한다.");
+             "언어를 선택하려면 /acc lang ko, /acc lang en, /acc lang de, /acc lang auto 중 하나를 입력한다.");
 
     public static string UnknownCommand =>
         Pick("Unbekannter Befehl. Tippe /acc help für Hilfe.",
@@ -168,12 +168,12 @@ public static partial class AccessibilityStrings
     public static string KeybindDumpSaved(int boundCount, int conflictCount) =>
         Pick($"Tastenbelegung gespeichert: {boundCount} Aktionen mit Taste, {conflictCount} Konflikte mit Plugin-Tasten. Datei auf dem Desktop, Details im Log.",
              $"Keybinds saved: {boundCount} bound actions, {conflictCount} conflicts with plugin keys. File on desktop, details in log.",
-             $"단축키 저장됨. 키가 지정된 동작 {boundCount}개, 모드 키와 충돌 {conflictCount}개. 파일은 바탕 화면에, 자세한 것은 로그에.");
+             $"단축키 저장됨. 키가 지정된 동작 {boundCount}개, 모드 키와 충돌 {conflictCount}개. 파일은 바탕 화면에, 자세한 내용은 로그에.");
 
     public static string KeybindDumpFailed =>
         Pick("Tastenbelegung konnte nicht gelesen werden. Details im Log.",
              "Could not read keybinds. See log for details.",
-             "단축키를 읽지 못함. 자세한 것은 로그에.");
+             "단축키를 읽지 못함. 자세한 내용은 로그에.");
 
     // ── ConfigSystem ─────────────────────────────────────────────────
     public static string ConfigSystem =>
@@ -263,12 +263,12 @@ public static partial class AccessibilityStrings
     public static string ActiveWindow(string name, int visibleCount) =>
         Pick($"Aktives Fenster: {name}. {visibleCount} Fenster sichtbar, Liste im Log.",
              $"Active window: {name}. {visibleCount} windows visible, list written to log.",
-             $"초점 받은 창: {name}. 보이는 창 {visibleCount}개, 전체 목록은 로그에 적힘.");
+             $"초점 받은 창: {name}. 보이는 창 {visibleCount}개, 전체 목록은 로그에.");
 
     public static string NoWindowFocused(int visibleCount) =>
         Pick($"Kein Fenster fokussiert. {visibleCount} Fenster sichtbar, Liste im Log.",
              $"No window focused. {visibleCount} windows visible, list written to log.",
-             $"초점 받은 창 없음. 보이는 창 {visibleCount}개, 전체 목록은 로그에 적힘.");
+             $"초점 받은 창 없음. 보이는 창 {visibleCount}개, 전체 목록은 로그에.");
 
     public static string UiManagerUnavailable =>
         Pick("Fenster-Liste nicht verfügbar.", "Window list not available.", "창 목록을 가져올 수 없음.");
@@ -285,7 +285,7 @@ public static partial class AccessibilityStrings
     public static string OkPressed  => Pick("Ok", "Ok", "확인");
     public static string NoOkButton => Pick("Kein Ok-Knopf gefunden.",
                                             "No Ok button found.",
-                                            "확인 버튼을 못 찾음.");
+                                            "확인 버튼을 찾을 수 없음.");
 
     // ── Charaktererstellung: Volk & Geschlecht ───────────────────────
     public static string GenderMale   => Pick("männlich", "male", "남성");
@@ -561,7 +561,7 @@ public static partial class AccessibilityStrings
                     $"{monster}, {area}에 서식. 그 지역은 지도에 표시되지 않음."))
             : (Pick($"Für {monster} ist kein Ort bekannt.",
                     $"No location known for {monster}.",
-                    $"{monster}의 위치를 모름."));
+                    $"{monster} 서식 장소 정보 없음."));
 
     public static string NoHuntingTargets =>
         Pick("Keine offenen Jagdziele in diesem Rang.",
@@ -679,7 +679,7 @@ public static partial class AccessibilityStrings
     /// The count is what the leve DEMANDS, not what is still missing: the
     /// progress lives in the duty list, the demand in the leve data.</summary>
     public static string LeveEnemyWanted(int required) =>
-        Pick($", {required} gesucht", $", {required} wanted", $", {required}마리 필요");
+        Pick($", {required} gesucht", $", {required} wanted", $", {required} 필요");
 
     // ── Aufgabenliste des laufenden Inhalts (Freibrief, Dungeon, FATE) ──
     //
@@ -797,7 +797,7 @@ public static partial class AccessibilityStrings
                                                             $"{name} 추적 중.");
     public static string TargetNotFound(string name)=> Pick($"Ziel {name} nicht gefunden.",
                                                             $"Target {name} not found.",
-                                                            $"대상 {name}, 못 찾음.");
+                                                            $"대상 {name}, 찾을 수 없음.");
     public static string TargetReached(string name) => Pick($"Ziel erreicht: {name}.",
                                                             $"Target reached: {name}.",
                                                             $"도착: {name}.");
@@ -806,7 +806,7 @@ public static partial class AccessibilityStrings
 
     public static string TrackingStopped => Pick("Zielverfolgung beendet.",
                                                  "Target tracking stopped.",
-                                                 "대상 추적 끝냄.");
+                                                 "대상 추적 종료.");
     public static string WalkTargetLost  => Pick("Gehhilfe: Ziel verloren.",
                                                  "Walk guide: target lost.",
                                                  "길안내 대상을 놓침.");
@@ -993,10 +993,10 @@ public static partial class AccessibilityStrings
 
     public static string NoAetherytesFound => Pick("Keine Ätheryten in diesem Gebiet gefunden.",
                                                    "No aetherytes found in this area.",
-                                                   "이 지역에서 에테라이트를 못 찾음.");
+                                                   "이 지역에서 에테라이트를 찾을 수 없음.");
     public static string NoWaypointsFound  => Pick("Keine Wegpunkte in diesem Gebiet gefunden.",
                                                    "No waypoints found in this area.",
-                                                   "이 지역에서 경유지를 못 찾음.");
+                                                   "이 지역에서 경유지를 찾을 수 없음.");
     public static string NoNavmeshStraightLine => Pick("Kein Wegenetz, führe in Luftlinie.",
                                                        "No navmesh, guiding in a straight line.",
                                                        "길 정보 없음. 직선으로 안내함.");
@@ -1095,7 +1095,7 @@ public static partial class AccessibilityStrings
                                                     "열린 알림 없음.");
     public static string NotificationNotResponding => Pick("Benachrichtigung reagiert nicht.",
                                                            "Notification not responding.",
-                                                           "알림이 반응하지 않음.");
+                                                           "알림 응답 없음.");
 
     // ── ContentsTutorial-Popup (Freischaltungen) ─────────────────────
     // NOTE: The actual close-button match ("Schließen") lives in the service and
@@ -1113,10 +1113,10 @@ public static partial class AccessibilityStrings
     public static string Closed         => Pick("Geschlossen.", "Closed.", "닫힘.");
     public static string CloseButtonNotResponding => Pick("Schließen-Knopf reagiert nicht.",
                                                           "Close button not responding.",
-                                                          "닫기 버튼이 반응하지 않음.");
+                                                          "닫기 버튼 응답 없음.");
     public static string NextButtonNotResponding  => Pick("Weiter-Knopf reagiert nicht.",
                                                           "Next button not responding.",
-                                                          "다음 버튼이 반응하지 않음.");
+                                                          "다음 버튼 응답 없음.");
 
     // ── Bestiarium (MonsterNote) ─────────────────────────────────────
     public static string BestiaryNotOpen   => Pick("Bestiarium ist nicht geöffnet.",
@@ -1124,7 +1124,7 @@ public static partial class AccessibilityStrings
                                                    "토벌수첩이 열려 있지 않음.");
     public static string BestiaryListNotFound => Pick("Bestiarium-Liste nicht gefunden.",
                                                       "Bestiary list not found.",
-                                                      "토벌수첩 목록을 못 찾음.");
+                                                      "토벌수첩 목록을 찾을 수 없음.");
     public static string NoMonstersInList  => Pick("Keine Monster in dieser Liste.",
                                                    "No monsters in this list.",
                                                    "이 목록에 마물 없음.");
@@ -1167,13 +1167,13 @@ public static partial class AccessibilityStrings
     // ── Zufaelliges Aussehen (CharaMake RandomLook) ──────────────────
     public static string NoAppearanceWindow => Pick("Kein Aussehen-Fenster offen. Nur im Schritt Aussehen der Charaktererschaffung.",
                                                     "No appearance window open. Only during the Appearance step of character creation.",
-                                                    "외모 창이 열려 있지 않음. 캐릭터 생성의 외모 단계에서만 쓸 수 있음.");
+                                                    "외모 창이 열려 있지 않음. 캐릭터 생성의 외모 단계에서만 사용할 수 있음.");
     public static string RandomAppearanceNotFound => Pick("Knopf Zufälliges Aussehen nicht gefunden.",
                                                           "Random appearance button not found.",
-                                                          "무작위 외모 버튼을 못 찾음.");
+                                                          "무작위 외모 버튼을 찾을 수 없음.");
     public static string RandomAppearanceNotResponding => Pick("Knopf Zufälliges Aussehen reagiert nicht.",
                                                                "Random appearance button not responding.",
-                                                               "무작위 외모 버튼이 반응하지 않음.");
+                                                               "무작위 외모 버튼 응답 없음.");
     public static string RandomAppearancePressed => Pick("Zufälliges Aussehen gedrückt.",
                                                          "Random appearance pressed.",
                                                          "무작위 외모 누름.");
@@ -1198,7 +1198,7 @@ public static partial class AccessibilityStrings
                                                         "탭을 눌렀지만 페이지가 바뀌지 않음.");
     public static string TabNotResponding => Pick("Reiter reagiert nicht.",
                                                   "Tab not responding.",
-                                                  "탭이 반응하지 않음.");
+                                                  "탭 응답 없음.");
 
     // ── Datenzentrum / Gamepad / Uebung / Menue ──────────────────────
     public static string ChooseDataCenter => Pick("Datenzentrum wählen.",
@@ -1210,13 +1210,13 @@ public static partial class AccessibilityStrings
     public static string ExerciseStarted => Pick("Übung gestartet.", "Exercise started.", "훈련 시작됨.");
     public static string BeginButtonNotResponding => Pick("Beginnen-Knopf reagiert nicht.",
                                                           "Begin button not responding.",
-                                                          "시작 버튼이 반응하지 않음.");
+                                                          "시작 버튼 응답 없음.");
     public static string NoActiveMenu => Pick("Kein aktives Menü.", "No active menu.", "활성 메뉴 없음.");
 
     // ── Dump (/acc dump) ─────────────────────────────────────────────
     public static string NoActiveAddonToDump => Pick("Kein aktives Addon für Dump gefunden.",
                                                      "No active addon found to dump.",
-                                                     "덤프할 창을 못 찾음.");
+                                                     "덤프할 창을 찾을 수 없음.");
     public static string NoAddonName => Pick("Kein Addon-Name. Beispiel: /acc dump TitleDCWorldMap",
                                              "No addon name. Example: /acc dump TitleDCWorldMap",
                                              "애드온 이름 없음. 예: /acc dump TitleDCWorldMap");
@@ -1226,7 +1226,7 @@ public static partial class AccessibilityStrings
     public static string UnknownWindowDumped(int count) =>
         Pick($"Kein bekanntes Fenster. {count} sichtbare Fenster gedumpt, Liste im Log.",
              $"No known window. Dumped {count} visible windows, list in the log.",
-             $"모드가 아는 창이 아님. 보이는 창 {count}개를 덤프해서 목록을 로그에 적음.");
+             $"모드가 모르는 창임. 보이는 창 {count}개를 덤프함. 목록은 로그에.");
 
     // ── Zusammengesetzte Ansagen (UIReader Etappe 2) ─────────────────
     /// <summary>" item: " / " items: " count label for a gathered/read item list.</summary>
@@ -1616,7 +1616,7 @@ public static partial class AccessibilityStrings
     /// blinden Spieler sonst nicht von „ausgerichtet" zu unterscheiden.
     /// </summary>
     public static string EscapeNoneFound =>
-        Pick("Kein sicherer Weg gefunden.", "No safe spot found.", "안전한 자리 못 찾음.");
+        Pick("Kein sicherer Weg gefunden.", "No safe spot found.", "안전한 길을 찾을 수 없음.");
 
     /// <summary>Restliche Cast-Zeit als hörbares Zeitbudget. Aufgerundet, damit aus
     /// 0,4 Sekunden nicht "0 Sekunden" wird; unter einer Sekunde bleibt nur noch
@@ -1655,11 +1655,11 @@ public static partial class AccessibilityStrings
     public static string DutyActionsAvailable(string actions, string key) =>
         Pick($"Sonderaktion verfügbar, {actions}. Taste {key}.",
              $"Duty action available, {actions}. Key {key}.",
-             $"쓸 수 있는 임무 전용 기술 {actions}. {key} 키.");
+             $"사용할 수 있는 임무 전용 기술 {actions}. {key} 키.");
 
     /// <summary>Es gibt gerade keine Sonderaktionsleiste.</summary>
     public static string NoDutyActions =>
-        Pick("Keine Sonderaktion vorhanden.", "No duty action available.", "쓸 수 있는 임무 전용 기술 없음.");
+        Pick("Keine Sonderaktion vorhanden.", "No duty action available.", "사용할 수 있는 임무 전용 기술 없음.");
 
     /// <summary>Die Taste zeigt auf einen Platz, den dieser Auftrag nicht belegt.</summary>
     public static string DutyActionSlotEmpty(int slot) =>
@@ -1673,7 +1673,7 @@ public static partial class AccessibilityStrings
     public static string DutyActionRefused(string action) =>
         Pick($"{action} geht gerade nicht.",
              $"{action} not possible right now.",
-             $"지금은 {action} 쓸 수 없음.");
+             $"지금은 {action} 사용할 수 없음.");
 
     // ── Level / Erfahrung ────────────────────────────────────────────
     public static string LevelReached(int level) => Pick($"Stufe {level} erreicht.",
@@ -1733,7 +1733,7 @@ public static partial class AccessibilityStrings
     public static string InGearsetWarning =>
         Pick(" Achtung: in einem Ausrüstungsset gespeichert, nicht verkaufen.",
              " Careful: saved in a gear set, do not sell.",
-             " 주의: 장비세트에 저장됨. 팔지 마라.");
+             " 주의: 장비세트에 저장됨. 판매 금지.");
 
     // ════════════════════════════════════════════════════════════════
     //  EquipmentService - Ausruestung
@@ -1758,7 +1758,7 @@ public static partial class AccessibilityStrings
                                                        "장비 변경이 이미 진행 중.");
     public static string EquipModuleUnavailable => Pick("Ausrüstungsmodul nicht verfügbar.",
                                                         "Equipment module not available.",
-                                                        "장비 모듈을 쓸 수 없음.");
+                                                        "장비 모듈을 사용할 수 없음.");
     public static string ApplyingRecommendedGear => Pick("Lege empfohlene Ausrüstung an.",
                                                          "Applying recommended equipment.",
                                                          "추천 장비 착용 중.");
@@ -1767,15 +1767,15 @@ public static partial class AccessibilityStrings
                                                    "장비 변경 실패.");
     public static string EquipChangeDidntWork => Pick("Ausrüstungswechsel hat nicht geklappt.",
                                                       "Equipment change did not work.",
-                                                      "장비 변경이 되지 않음.");
+                                                      "장비 변경 안 됨.");
     public static string EquipResult(int changed) =>
         changed > 0
             ? (Pick($"Empfohlene Ausrüstung angelegt, {changed} Teile gewechselt.",
                     $"Recommended equipment applied, {changed} pieces changed.",
-                    $"추천 장비 착용됨. {changed}개 바뀜."))
+                    $"추천 장비 착용됨. {changed}개 변경됨."))
             : (Pick("Ausrüstung unverändert. Entweder schon optimal, oder Wechsel gerade nicht möglich.",
                     "Equipment unchanged. Either already optimal, or a change is not possible right now.",
-                    "장비 그대로. 이미 최적이거나 지금은 바꿀 수 없음."));
+                    "장비 변경 없음. 이미 최적이거나 지금은 바꿀 수 없음."));
 
     /// <summary>Spoken equipment-slot label (mod wording, not the game's).</summary>
     public static string SlotEquipment  => Pick("Ausrüstung", "Equipment", "장비");
@@ -1869,7 +1869,7 @@ public static partial class AccessibilityStrings
     public static string NoCoordsInClipboard =>
         Pick("Keine Koordinaten in der Zwischenablage gefunden. Erst die Zahlen kopieren, dann die Taste drücken.",
              "No coordinates found on the clipboard. Copy the numbers first, then press the key.",
-             "클립보드에 좌표가 없음. 먼저 숫자 복사 필요.");
+             "클립보드에 좌표 없음. 먼저 숫자를 복사한 다음 키 다시 누르기.");
     public static string MapUnknownConvert =>
         Pick("Aktuelle Karte unbekannt, kann nicht umrechnen.",
              "Current map unknown, cannot convert.",
@@ -1935,15 +1935,15 @@ public static partial class AccessibilityStrings
     public static string QuestInAnotherZoneNoHop(string quest) =>
         Pick($"{quest} ist in einem anderen Gebiet und ich finde keinen Übergang dorthin.",
              $"{quest} is in another area and I can't find a transition there.",
-             $"{quest}, 다른 지역에 있고 그리로 가는 통로를 못 찾음.");
+             $"{quest}, 다른 지역에 있고 그리로 가는 통로를 찾을 수 없음.");
     public static string NoWalkablePointAt(string name) =>
         Pick($"Kein begehbarer Punkt am {name} gefunden.",
              $"No walkable point found at {name}.",
-             $"{name}에서 걸어갈 수 있는 지점을 못 찾음.");
+             $"{name}에서 걸어갈 수 있는 지점을 찾을 수 없음.");
     public static string NoWalkablePointNear(string name) =>
         Pick($"Kein begehbarer Punkt bei {name} gefunden.",
              $"No walkable point found near {name}.",
-             $"{name} 근처에서 걸어갈 수 있는 지점을 못 찾음.");
+             $"{name} 근처에서 걸어갈 수 있는 지점을 찾을 수 없음.");
 
     // Bestiarium: nächstes lebendes Exemplar / Lebensraum
     public static string NoMonsterNearby(string monster) =>
@@ -2080,15 +2080,15 @@ public static partial class AccessibilityStrings
     public static string Following(string name) =>
         Pick($"Folge {name}.", $"Following {name}.", $"{name} 따라가는 중.");
     public static string FollowStopped =>
-        Pick("Folgen beendet.", "Follow stopped.", "따라가기 끝냄.");
+        Pick("Folgen beendet.", "Follow stopped.", "따라가기 종료.");
     public static string FollowStoppedZone =>
         Pick("Folgen beendet, Gebiet gewechselt.",
              "Follow stopped, zone changed.",
-             "지역이 바뀌어 따라가기 끝냄.");
+             "지역이 바뀌어 따라가기 종료.");
     public static string FollowTargetGone(string name) =>
         Pick($"{name} ist weg. Folgen beendet.",
              $"{name} is gone. Follow stopped.",
-             $"{name} 사라짐. 따라가기 끝냄.");
+             $"{name} 사라짐. 따라가기 종료.");
     public static string FollowAbortedNoResponse =>
         Pick("Folgen abgebrochen, vnavmesh antwortet nicht.",
              "Follow aborted, vnavmesh not responding.",
@@ -2096,7 +2096,7 @@ public static partial class AccessibilityStrings
     public static string FollowAbortedUnavailable =>
         Pick("Folgen abgebrochen, vnavmesh nicht verfügbar.",
              "Follow aborted, vnavmesh not available.",
-             "따라가기 중단. vnavmesh를 쓸 수 없음.");
+             "따라가기 중단. vnavmesh를 사용할 수 없음.");
 
     public static string MeshLoading =>
         Pick("Wegenetz wird geladen.", "Loading navmesh.", "길 정보 불러오는 중.");
@@ -2121,7 +2121,7 @@ public static partial class AccessibilityStrings
     public static string AutoWalkUnavailable =>
         Pick("Auto-Lauf nicht verfügbar. Das Plugin vnavmesh fehlt oder ist nicht geladen.",
              "Auto-walk not available. The vnavmesh plugin is missing or not loaded.",
-             "자동 이동을 쓸 수 없음. vnavmesh 플러그인이 없거나 불러오지 못함.");
+             "자동 이동을 사용할 수 없음. vnavmesh 플러그인이 없거나 불러오지 못함.");
 
     public static string WalkingTo(string name) =>
         Pick($"Laufe zu {name}.", $"Walking to {name}.", $"{name}까지 이동 중.");
@@ -2136,7 +2136,7 @@ public static partial class AccessibilityStrings
     public static string WalkingToBelowLedge(string name, float metres) =>
         Pick($"{name} liegt unter einem Vorsprung. Laufe bis auf {metres:F0} Meter heran.",
              $"{name} is under an overhang. Walking to within {metres:F0} meters of it.",
-             $"목적지 {name}. 위가 막힌 곳이라 {metres:F0}미터 앞까지 이동함.");
+             $"목적지 {name}. 위쪽이 막힌 곳이라 {metres:F0}미터 앞까지 이동함.");
 
     /// <summary>Ankunft am Ersatzpunkt: das Ziel selbst liegt noch die genannte
     /// Strecke in der genannten Himmelsrichtung. Richtung statt links/rechts aus
@@ -2144,7 +2144,7 @@ public static partial class AccessibilityStrings
     public static string ArrivedBelowLedge(string name, float metres, string direction) =>
         Pick($"Angekommen. {name} ist {MetersRemaining(metres)} nach {direction}, unter dem Vorsprung.",
              $"Arrived. {name} is {MetersRemaining(metres)} to the {direction}, under the overhang.",
-             $"도착. 목적지 {name}, {direction} 방향으로 {MetersRemaining(metres)}. 위가 막힌 곳.");
+             $"도착. 목적지 {name}, {direction} 방향으로 {MetersRemaining(metres)}. 위쪽이 막힌 곳.");
 
     public static string AutoWalkStopped =>
         Pick("Auto-Lauf gestoppt.", "Auto-walk stopped.", "자동 이동 멈춤.");
@@ -2167,21 +2167,21 @@ public static partial class AccessibilityStrings
     public static string AutoWalkEndedRemaining(float distance) =>
         Pick($"Auto-Lauf beendet, noch {MetersRemaining(distance)}.",
              $"Auto-walk ended, {MetersRemaining(distance)} remaining.",
-             $"자동 이동 끝. {MetersRemaining(distance)} 남음.");
+             $"자동 이동 종료. {MetersRemaining(distance)} 남음.");
     public static string StuckRemaining(float distance) =>
         Pick($"Ich stecke fest, noch {MetersRemaining(distance)}. Auto-Lauf beendet.",
              $"I'm stuck, {MetersRemaining(distance)} remaining. Auto-walk ended.",
-             $"길이 막혀 더 못 감. 목적지까지 {MetersRemaining(distance)} 남기고 자동 이동 끝.");
+             $"길이 막혀 더 못 감. 목적지까지 {MetersRemaining(distance)} 남기고 자동 이동 종료.");
     /// <summary>Same, with the culprit named (see <see cref="ObstacleService"/>).
     /// "Ich stecke fest" says nothing about what to do; the blocker does.</summary>
     public static string StuckBehind(string blocker, float distance) =>
         Pick($"Ich komme nicht weiter, {blocker} steht im Weg. Noch {MetersRemaining(distance)}. Auto-Lauf beendet.",
              $"I cannot get any further, {blocker} is in the way. {MetersRemaining(distance)} remaining. Auto-walk ended.",
-             $"{blocker} 때문에 더 못 감. 목적지까지 {MetersRemaining(distance)} 남기고 자동 이동 끝.");
+             $"{blocker} 때문에 더 못 감. 목적지까지 {MetersRemaining(distance)} 남기고 자동 이동 종료.");
     public static string NoPathTo(string name, string hint) =>
         Pick($"Kein Weg zu {name} gefunden.{hint}",
              $"No path to {name} found.{hint}",
-             $"{name}까지 가는 길을 못 찾음.{hint}");
+             $"{name}까지 가는 길을 찾을 수 없음.{hint}");
     /// <summary>
     /// Appended to the stuck message in a housing ward. Names the cause AND the
     /// one-line remedy, because neither is the player's doing: the mesh vnavmesh
@@ -2200,7 +2200,7 @@ public static partial class AccessibilityStrings
 
     public static string HousingFenceHint => Pick(" Das Wegenetz ist hier älter als die Häuser. Mit dem Befehl vnav rebuild neu bauen lassen.",
                                                   " The navigation mesh here is older than the houses. Rebuild it with the vnav rebuild command.",
-                                                  " 여기 길 정보가 집보다 오래돼서 지금 지형과 맞지 않는다. vnav rebuild 명령을 쳐서 다시 만들어라.");
+                                                  "길 정보가 집보다 오래돼 지형과 맞지 않음. vnav rebuild 명령으로 다시 만들기 필요.");
     /// <summary>The walk ran as far as the walkable mesh goes. Says the direction
     /// too, because "still 454 metres" without a bearing leaves the player with
     /// nothing to do next.</summary>
@@ -2218,7 +2218,7 @@ public static partial class AccessibilityStrings
     public static string NoPathAetheryteHint(string aetheryteName) =>
         Pick($" Das Ziel liegt nahe dem Ätheryt {aetheryteName}. Reise per Aethernet dorthin.",
              $" The destination is near the aetheryte {aetheryteName}. Travel there via the aethernet.",
-             $" 목적지가 에테라이트 {aetheryteName} 근처다. 전송망으로 이동해라.");
+             $" 목적지가 에테라이트 {aetheryteName} 근처. 전송망으로 이동 필요.");
 
     // ── Orts-Namen (PlacesService) - der gesprochene Name, NICHT der interne
     //    TypeLabel (der bleibt als Identität deutsch, siehe PlacesService). ──
@@ -2253,7 +2253,7 @@ public static partial class AccessibilityStrings
     //  NavigationService - Gehhilfe (walk guide)
     // ════════════════════════════════════════════════════════════════
     public static string WalkGuideEnded =>
-        Pick("Gehhilfe beendet.", "Walk guide ended.", "길안내 끝냄.");
+        Pick("Gehhilfe beendet.", "Walk guide ended.", "길안내 종료.");
     public static string WalkGuideOff =>
         Pick("Gehhilfe aus.", "Walk guide off.", "길안내 꺼짐.");
     public static string WalkGuideOn(string name) =>
@@ -2265,11 +2265,11 @@ public static partial class AccessibilityStrings
     public static string WalkGuideOnBelowLedge(string name, float metres) =>
         Pick($"Gehhilfe an: {name}. Liegt unter einem Vorsprung, führe bis auf {metres:F0} Meter heran.",
              $"Walk guide on: {name}. It is under an overhang, guiding to within {metres:F0} meters of it.",
-             $"길안내 켜짐. 목적지 {name}. 위가 막힌 곳이라 {metres:F0}미터 앞까지 안내함.");
+             $"길안내 켜짐. 목적지 {name}. 위쪽이 막힌 곳이라 {metres:F0}미터 앞까지 안내함.");
     public static string NoPathStraightLine(string hint) =>
         Pick($"Kein Weg gefunden, führe in Luftlinie.{hint}",
              $"No path found, guiding in a straight line.{hint}",
-             $"길을 못 찾음. 직선으로 안내함.{hint}");
+             $"길을 찾을 수 없음. 직선으로 안내함.{hint}");
     // ════════════════════════════════════════════════════════════════
     //  TrailService - selbst abgelaufene Spuren ueber Netzluecken
     // ════════════════════════════════════════════════════════════════
@@ -2290,7 +2290,7 @@ public static partial class AccessibilityStrings
     /// far side is exactly what happened in-game on 2026-08-09.</summary>
     public static string TrailOneWayOnly(float drop) => Pick($"Achtung, diese Spur ueberwindet {MetersRemaining(drop)} Hoehe und gilt deshalb nur in Laufrichtung. Fuer den Rueckweg zeichne bitte eine eigene Spur auf.",
                                                              $"Careful: this trail covers {MetersRemaining(drop)} of height, so it only counts in the direction you walked it. Record a separate trail for the way back.",
-                                                             $"주의: 이 발자취는 높이 {MetersRemaining(drop)}를 내려가므로 걸어간 방향으로만 쓸 수 있다. 돌아오는 길은 따로 기록해라.");
+                                                             $"주의: 이 발자취는 높이 {MetersRemaining(drop)}를 내려가므로 걸어간 방향으로만 사용할 수 있음. 돌아오는 길은 따로 기록 필요.");
     public static string TrailDefaultName(int number) => Pick($"Verbindung {number}",
                                                               $"Crossing {number}",
                                                               $"연결 {number}");
@@ -2363,7 +2363,7 @@ public static partial class AccessibilityStrings
     /// control, so the walk ends honestly instead of drifting off.</summary>
     public static string TrailLost => Pick("Ich komme auf der Spur nicht durch, Lauf beendet.",
                                            "I cannot get through on the trail; walk ended.",
-                                           "발자취를 따라가다 막힘. 자동 이동 끝.");
+                                           "발자취를 따라가다 막힘. 자동 이동 종료.");
 
     /// <summary>The walk guide ran out of walkable mesh. Unlike the auto-walk
     /// nothing is stopped - the player does the walking - so the line says what
@@ -2377,7 +2377,7 @@ public static partial class AccessibilityStrings
     //  HotbarService - Aktionsleiste & Skill-Browser
     // ════════════════════════════════════════════════════════════════
     public static string HotbarUnavailable =>
-        Pick("Aktionsleiste nicht verfügbar.", "Hotbar not available.", "단축바를 쓸 수 없음.");
+        Pick("Aktionsleiste nicht verfügbar.", "Hotbar not available.", "단축바를 사용할 수 없음.");
     public static string HotbarEmpty(int bar) =>
         Pick($"Aktionsleiste {bar} ist leer.", $"Hotbar {bar} is empty.", $"{bar}번 단축바, 비어 있음.");
     public static string HotbarPrefix(int bar) =>
@@ -2396,11 +2396,11 @@ public static partial class AccessibilityStrings
     public static string NoSkillSelected =>
         Pick("Kein Skill gewählt. Erst mit dem Skill-Browser blättern.",
              "No skill selected. Browse with the skill browser first.",
-             "고른 기술 없음. 먼저 기술 목록에서 선택 필요.");
+             "선택한 기술 없음. 먼저 기술 목록에서 선택 필요.");
     public static string NoTargetSlot =>
         Pick("Keine Ziel-Taste gewählt. Erst die Ziel-Taste wählen.",
              "No target slot selected. Select the target slot first.",
-             "배정할 키를 안 골랐음. 먼저 배정할 키 선택 필요.");
+             "배정할 키를 선택하지 않음. 먼저 배정할 키 선택 필요.");
     public static string AssignFailed =>
         Pick("Belegen fehlgeschlagen.", "Assignment failed.", "배정 실패.");
     public static string SkillAssigned(string name, string slotLabel) =>
@@ -2414,7 +2414,7 @@ public static partial class AccessibilityStrings
     public static string PlayerDataNotReady =>
         Pick("Spielerdaten noch nicht bereit.", "Player data not ready yet.", "플레이어 정보가 아직 준비 안 됨.");
     public static string NoSkillsFound =>
-        Pick("Keine Skills gefunden.", "No skills found.", "기술을 못 찾음.");
+        Pick("Keine Skills gefunden.", "No skills found.", "기술을 찾을 수 없음.");
     /// <summary>Bare "slot N" label (no bar), used in the hotbar read-out.</summary>
     public static string SlotNumberWord(int slot) =>
         Pick($"Slot {slot}", $"slot {slot}", $"{slot}번 칸");
@@ -2502,7 +2502,7 @@ public static partial class AccessibilityStrings
     public static string QuestItemReceived(string joined) =>
         Pick($"Quest-Gegenstand zum Benutzen: {joined}. Mit Strg und Nummernblock 0 auf die Leiste legen.",
              $"Usable quest item: {joined}. Put it on a bar with Ctrl and Numpad 0.",
-             $"쓸 수 있는 퀘스트 아이템: {joined}. 컨트롤과 숫자패드 0은 단축바에 올리기.");
+             $"사용할 수 있는 퀘스트 아이템: {joined}. 컨트롤과 숫자패드 0은 단축바에 올리기.");
 
     // ── Zugang zum Ziel (Aufgangs-Erkennung) ─────────────────────────
     // Wenn das Ziel auf einer Fläche liegt, die im Wegenetz nicht an unserer
@@ -2513,7 +2513,7 @@ public static partial class AccessibilityStrings
     public static string ApproachNoTarget =>
         Pick("Kein Ziel gewählt. Erst ein Ziel anvisieren oder im Objekt-Browser auswählen.",
              "No destination selected. Target something first, or pick it in the object browser.",
-             "고른 목적지 없음. 먼저 대상 지정이나 사물 목록에서 선택 필요.");
+             "선택한 목적지 없음. 먼저 대상 지정이나 사물 목록에서 선택 필요.");
 
     /// <summary>Approach search: started (it takes a moment, so say so).</summary>
     public static string ApproachChecking(string target) =>
@@ -2643,12 +2643,12 @@ public static partial class AccessibilityStrings
     public static string NoUsableItems =>
         Pick("Keine benutzbaren Gegenstände in der Tasche.",
              "No usable items in your bag.",
-             "소지품에 쓸 수 있는 아이템 없음.");
+             "소지품에 사용할 수 있는 아이템 없음.");
     /// <summary>Spoken after a skill is chosen: now pick the target key.</summary>
     public static string SkillMenuPickTarget(string skillName, int count) =>
         Pick($"{skillName} gewählt. Ziel-Taste wählen, {count} verfügbar. Nummernblock 8 und 2 blättern, Nummernblock 0 belegt, Nummernblock Komma zurück.",
              $"{skillName} selected. Choose a target key, {count} available. Numpad 8 and 2 to browse, Numpad 0 assigns, Numpad decimal to go back.",
-             $"{skillName} 선택됨. 배정할 키 선택. 고를 수 있는 키 {count}개. 숫자패드 8과 2는 항목 이동, 0은 배정, 마침표는 뒤로.");
+             $"{skillName} 선택됨. 배정할 키 선택. 선택할 수 있는 키 {count}개. 숫자패드 8과 2는 항목 이동, 0은 배정, 마침표는 뒤로.");
     /// <summary>One browsed target key: its label, what is on it now, position in list.</summary>
     public static string SkillMenuTargetEntry(string slotLabel, string current, int index, int count) =>
         Pick($"{slotLabel}, aktuell {current}, {index} von {count}",
@@ -2657,7 +2657,9 @@ public static partial class AccessibilityStrings
     public static string SkillMenuClosed =>
         Pick("Skill-Menü geschlossen.", "Skill menu closed.", "기술 메뉴 닫힘.");
     public static string SkillMenuNoTargets =>
-        Pick("Keine belegbaren Tasten gefunden.", "No assignable keys found.", "배정할 수 있는 키를 못 찾음.");
+        Pick("Keine belegbaren Tasten gefunden.",
+             "No assignable keys found.",
+             "배정할 수 있는 키를 찾을 수 없음.");
 
     // ── CooldownService: Fähigkeit wieder bereit ──
     public static string SkillReady(string name) =>
@@ -2677,15 +2679,15 @@ public static partial class AccessibilityStrings
     public static string NoEmoteSelected =>
         Pick("Kein Emote gewählt. Erst durchblättern.",
              "No emote selected. Browse first.",
-             "고른 감정 표현 없음. 먼저 항목 이동으로 선택 필요.");
+             "선택한 감정 표현 없음. 먼저 항목 이동으로 선택 필요.");
     public static string EmoteUnavailable =>
-        Pick("Emote nicht verfügbar.", "Emote not available.", "감정 표현을 쓸 수 없음.");
+        Pick("Emote nicht verfügbar.", "Emote not available.", "감정 표현을 사용할 수 없음.");
     public static string EmoteFailed =>
         Pick("Emote fehlgeschlagen.", "Emote failed.", "감정 표현 실패.");
     public static string EmotesNotReady =>
         Pick("Emotes noch nicht bereit.", "Emotes not ready yet.", "감정 표현이 아직 준비 안 됨.");
     public static string NoEmotesAvailable =>
-        Pick("Keine Emotes verfügbar.", "No emotes available.", "쓸 수 있는 감정 표현 없음.");
+        Pick("Keine Emotes verfügbar.", "No emotes available.", "사용할 수 있는 감정 표현 없음.");
     /// <summary>One browsed emote: name, chat command (optional), list position.</summary>
     public static string EmoteBrowseEntry(string name, string command, int index, int count) =>
         Loc.IsKorean ? $"{name}{(command.Length > 0 ? $", 명령어 {command}" : "")}, {count} 중 {index}"
@@ -2699,7 +2701,7 @@ public static partial class AccessibilityStrings
     public static string NoPluginSelected =>
         Pick("Kein Plugin gewählt. Erst durchblättern.",
              "No plugin selected. Browse first.",
-             "고른 플러그인 없음. 먼저 항목 이동으로 선택 필요.");
+             "선택한 플러그인 없음. 먼저 항목 이동으로 선택 필요.");
     public static string PluginNoSettings(string name) =>
         Pick($"{name} hat keine Einstellungen.", $"{name} has no settings.", $"{name}, 설정 없음.");
     public static string PluginSettingsOpened(string name) =>
@@ -2750,11 +2752,11 @@ public static partial class AccessibilityStrings
     public static string MapUnknownCantRemember =>
         Pick("Aktuelle Karte unbekannt, kann die Stelle nicht merken.",
              "Current map unknown, cannot remember this spot.",
-             "현재 지도를 알 수 없어 이 자리를 기억할 수 없음.");
+             "현재 지도를 알 수 없어 자리를 기억할 수 없음.");
     public static string FishingSpotRemembered(string name, float mapX, float mapY) =>
         Pick($"Angelplatz {name} hier gemerkt: Karte {mapX:F1}, {mapY:F1}.",
              $"Fishing spot {name} remembered here: map {mapX:F1}, {mapY:F1}.",
-             $"낚시터 {name}, 지금 서 있는 자리로 기억함: 지도 {mapX:F1}, {mapY:F1}.");
+             $"낚시터 {name}, 서 있는 자리로 기억함: 지도 {mapX:F1}, {mapY:F1}.");
 
     // ════════════════════════════════════════════════════════════════
     //  GatheringService
@@ -3006,7 +3008,7 @@ public static partial class AccessibilityStrings
     //  BeaconService
     // ════════════════════════════════════════════════════════════════
     public static string BeaconUnavailable =>
-        Pick("Ton-Beacon nicht verfügbar.", "Audio beacon not available.", "알림음을 쓸 수 없음.");
+        Pick("Ton-Beacon nicht verfügbar.", "Audio beacon not available.", "알림음을 사용할 수 없음.");
 
     // ════════════════════════════════════════════════════════════════
     //  UIReaderService - Restpunkte (Benachrichtigung, Countdown)
@@ -3090,7 +3092,7 @@ public static partial class AccessibilityStrings
              $"크리스탈, {needed}개 필요, 소지품에 {owned}개");
     /// <summary>Said instead of the values when no recipe is selected yet.</summary>
     public static string RecipeNoSelection =>
-        Pick("Kein Rezept ausgewählt.", "No recipe selected.", "고른 제작법 없음.");
+        Pick("Kein Rezept ausgewählt.", "No recipe selected.", "선택한 제작법 없음.");
 
     // ── Inventar / Gegenstands-Slots ────────────────────────────────
     /// <summary>An item with its stack count. German needs the "mal" connector,
@@ -3510,5 +3512,5 @@ public static partial class AccessibilityStrings
     public static string DeepEffectInactive => Pick("nicht aktiv", "not active", "적용 안 됨");
 
     /// <summary>Ein Pomander, den das Spiel gerade verweigert (Items[i].IsUsable false).</summary>
-    public static string DeepItemUnusable => Pick("nicht verwendbar", "not usable", "쓸 수 없음");
+    public static string DeepItemUnusable => Pick("nicht verwendbar", "not usable", "사용 불가");
 }
