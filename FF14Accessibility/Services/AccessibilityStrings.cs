@@ -2361,7 +2361,10 @@ public static partial class AccessibilityStrings
     {
         var flat = WalkMeshEndsHere(distance, direction);
         var metres = MathF.Abs(rise);
-        return IsGerman
+        return Loc.IsKorean
+            ? $"{flat} 그중 {metres:F0}미터 {(rise > 0 ? "위" : "아래")}. " +
+              $"목적지가 {(rise > 0 ? "위쪽" : "아래쪽")}에 있음."
+            : IsGerman
             ? $"{flat} Davon {metres:F0} Meter {(rise > 0 ? "nach oben" : "nach unten")} - " +
               $"das Ziel liegt {(rise > 0 ? "ueber" : "unter")} dir."
             : $"{flat} {metres:F0} meters of that {(rise > 0 ? "up" : "down")} - " +
