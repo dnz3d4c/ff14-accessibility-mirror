@@ -113,7 +113,7 @@ public static partial class AccessibilityStrings
     /// Eine Auswahl, die man nicht hoert, ist keine.
     /// </para>
     /// </summary>
-    public static string RadioNotSelected => IsGerman ? "nicht ausgewählt" : "not selected";
+    public static string RadioNotSelected => Pick("nicht ausgewählt", "not selected", "선택 안 됨");
     /// <summary>Control-type word for a checkbox, so the user knows it is a
     /// toggle they can flip - not just an informational label.</summary>
     public static string SwitchControl => Pick("Schalter", "switch", "스위치");
@@ -133,7 +133,9 @@ public static partial class AccessibilityStrings
     /// </para>
     /// </summary>
     public static string GroupMemberPosition(string group, int index, int count) =>
-        IsGerman ? $"{group}, {index} von {count}" : $"{group}, {index} of {count}";
+        Pick($"{group}, {index} von {count}",
+             $"{group}, {index} of {count}",
+             $"{group}, {count} 중 {index}");
     /// <summary>Control is greyed out / not currently changeable (NodeFlags.Enabled
     /// cleared) - e.g. a sub-toggle while its master switch is off.</summary>
     public static string StateDisabled => Pick("ausgegraut", "greyed out", "선택 불가");
@@ -1448,8 +1450,12 @@ public static partial class AccessibilityStrings
     /// </summary>
     public static string NamedInputFieldValue(string label, string typed) =>
         typed.Length > 0
-            ? (IsGerman ? $"{label}, Eingabefeld: {typed}" : $"{label}, input field: {typed}")
-            : (IsGerman ? $"{label}, Eingabefeld, leer"    : $"{label}, input field, empty");
+            ? (Pick($"{label}, Eingabefeld: {typed}",
+                    $"{label}, input field: {typed}",
+                    $"{label}, 입력란: {typed}"))
+            : (Pick($"{label}, Eingabefeld, leer",
+                    $"{label}, input field, empty",
+                    $"{label}, 입력란, 비어 있음"));
 
     // ── Zahl mit ihrer Beschriftung ──────────────────────────────────
     /// <summary>
