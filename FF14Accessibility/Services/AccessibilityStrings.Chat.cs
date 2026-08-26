@@ -493,7 +493,7 @@ public static partial class AccessibilityStrings
     /// zwanzig von einundzwanzig Zeilen ist nur Lärm.
     /// </summary>
     public static string OrderRow(string name, bool visible) =>
-        visible ? name : (IsGerman ? $"{name}, aus" : $"{name}, off");
+        visible ? name : (Pick($"{name}, aus", $"{name}, off", $"{name}, 꺼짐"));
 
     /// <summary>
     /// Die Ansage beim Öffnen einer Sortier-Ebene: sie muss die Bedienung
