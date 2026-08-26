@@ -40,24 +40,28 @@ public static partial class AccessibilityStrings
 
     /// <summary>Beim Aufnehmen einer Zeile: "Gegner aufgenommen, 4 von 21".</summary>
     public static string MenuGrabbed(string label, int index, int count) =>
-        IsGerman ? $"{label} aufgenommen, {index} von {count}."
-                 : $"{label} picked up, {index} of {count}.";
+        Pick($"{label} aufgenommen, {index} von {count}.",
+             $"{label} picked up, {index} of {count}.",
+             $"{label} 집음, {count} 중 {index}.");
 
     /// <summary>Nach jedem Schritt: "Gegner, jetzt 3 von 21".</summary>
     public static string MenuMovedTo(string label, int index, int count) =>
-        IsGerman ? $"{label}, jetzt {index} von {count}."
-                 : $"{label}, now {index} of {count}.";
+        Pick($"{label}, jetzt {index} von {count}.",
+             $"{label}, now {index} of {count}.",
+             $"{label}, 지금 {count} 중 {index}.");
 
     /// <summary>Wenn es in diese Richtung nicht weitergeht. Sagt die Position
     /// erneut, damit ein Druck ins Leere nicht wie ein verschluckter klingt.</summary>
     public static string MenuMoveEnd(string label, int index, int count) =>
-        IsGerman ? $"{label} bleibt auf {index} von {count}."
-                 : $"{label} stays at {index} of {count}.";
+        Pick($"{label} bleibt auf {index} von {count}.",
+             $"{label} stays at {index} of {count}.",
+             $"{label} 그대로, {count} 중 {index}.");
 
     /// <summary>Beim Ablegen: "Gegner abgelegt auf Platz 2".</summary>
     public static string MenuDropped(string label, int index) =>
-        IsGerman ? $"{label} abgelegt auf Platz {index}."
-                 : $"{label} dropped at position {index}.";
+        Pick($"{label} abgelegt auf Platz {index}.",
+             $"{label} dropped at position {index}.",
+             $"{label} 놓음, {index}번 자리.");
 
     /// <summary>
     /// Wird an jede Verschiebe-Ansage angehängt und sagt, WOZWISCHEN die
@@ -84,11 +88,13 @@ public static partial class AccessibilityStrings
         var hasAfter  = after.Length > 0;
 
         if (hasBefore && hasAfter)
-            return IsGerman ? $" Zwischen {before} und {after}." : $" Between {before} and {after}.";
+            return Pick($" Zwischen {before} und {after}.",
+                        $" Between {before} and {after}.",
+                        $" {before}, {after} 사이.");
         if (hasBefore)
-            return IsGerman ? $" Hinter {before}." : $" After {before}.";
+            return Pick($" Hinter {before}.", $" After {before}.", $" {before} 뒤.");
         if (hasAfter)
-            return IsGerman ? $" Vor {after}." : $" Before {after}.";
+            return Pick($" Vor {after}.", $" Before {after}.", $" {after} 앞.");
         return string.Empty;
     }
 
@@ -331,7 +337,7 @@ public static partial class AccessibilityStrings
     /// gleich heißen und Verschiedenes bedeuten.
     /// </summary>
     public static string BufferTabAllOf(string tabName) =>
-        IsGerman ? $"{tabName}, alles" : $"{tabName}, all";
+        Pick($"{tabName}, alles", $"{tabName}, all", $"{tabName}, 전체");
 
     /// <summary>
     /// Wird EINMAL gesagt, wenn der Filterzustand des Spiels nicht gelesen werden kann.
@@ -430,23 +436,29 @@ public static partial class AccessibilityStrings
     // in keinem Menü der Mod gibt. So bleibt Numpad0 überall das, was es überall
     // ist - in der einen Ebene nimmt es auf, in der anderen schaltet es um.
 
-    public static string OptionsOrder => IsGerman ? "Reihenfolge" : "Order";
+    public static string OptionsOrder => Pick("Reihenfolge", "Order", "순서");
 
     /// <summary>Der Abschnitt für die Objekt-Browser-Kategorien. "Objekte
     /// durchblättern" und nicht "Kategorien", weil der Spieler die Liste über die
     /// Bild-Tasten kennt und nicht über ihren internen Namen.</summary>
     public static string OptionsOrderObjects =>
-        IsGerman ? "Reihenfolge beim Objekte-Durchblättern" : "Order when browsing objects";
+        Pick("Reihenfolge beim Objekte-Durchblättern", "Order when browsing objects", "사물 넘기기 순서");
 
     /// <summary>Derselbe Abschnitt für die Nachlese-Kategorien.</summary>
     public static string OptionsOrderChat =>
-        IsGerman ? "Reihenfolge der Nachlese-Kategorien" : "Order of chat history categories";
+        Pick("Reihenfolge der Nachlese-Kategorien",
+             "Order of chat history categories",
+             "대화 기록 분류 순서");
 
     public static string OptionsShowObjects =>
-        IsGerman ? "Objekt-Kategorien ein- und ausschalten" : "Switch object categories on and off";
+        Pick("Objekt-Kategorien ein- und ausschalten",
+             "Switch object categories on and off",
+             "사물 분류 켜고 끄기");
 
     public static string OptionsShowChat =>
-        IsGerman ? "Nachlese-Kategorien ein- und ausschalten" : "Switch chat history categories on and off";
+        Pick("Nachlese-Kategorien ein- und ausschalten",
+             "Switch chat history categories on and off",
+             "대화 기록 분류 켜고 끄기");
 
     /// <summary>
     /// Der Titel der Sortier-Ebene. Sagt den Kategoriensatz mit, weil es zwei
@@ -454,11 +466,11 @@ public static partial class AccessibilityStrings
     /// umsortiert: in einem Tiefen Gewölbe gilt ein eigener, kürzerer Satz.
     /// </summary>
     public static string OrderTitle(string set) =>
-        IsGerman ? $"Reihenfolge: {set}" : $"Order: {set}";
+        Pick($"Reihenfolge: {set}", $"Order: {set}", $"순서: {set}");
 
-    public static string OrderSetWorld => IsGerman ? "Welt" : "World";
-    public static string OrderSetDeepDungeon => IsGerman ? "Tiefes Gewölbe" : "Deep dungeon";
-    public static string OrderSetChat => IsGerman ? "Nachlese" : "Chat history";
+    public static string OrderSetWorld => Pick("Welt", "World", "필드");
+    public static string OrderSetDeepDungeon => Pick("Tiefes Gewölbe", "Deep dungeon", "딥 던전");
+    public static string OrderSetChat => Pick("Nachlese", "Chat history", "대화 기록");
 
     /// <summary>
     /// Eine Zeile in der Sortier-Ebene. Sagt "aus" mit, wenn die Kategorie
@@ -476,9 +488,9 @@ public static partial class AccessibilityStrings
     /// Bestätigungstaste etwas anderes tut als sonst.
     /// </summary>
     public static string OrderHint =>
-        IsGerman
-            ? "Bestätigen nimmt eine Zeile auf, hoch und runter verschiebt sie, Bestätigen legt sie wieder ab."
-            : "Confirm picks a row up, up and down move it, confirm puts it down again.";
+        Pick("Bestätigen nimmt eine Zeile auf, hoch und runter verschiebt sie, Bestätigen legt sie wieder ab.",
+             "Confirm picks a row up, up and down move it, confirm puts it down again.",
+             "확인은 줄 집기, 위아래는 옮기기, 확인은 다시 놓기.");
 
     /// <summary>
     /// Wenn der Spieler die letzte eingeschaltete Kategorie abschalten will.
@@ -489,9 +501,9 @@ public static partial class AccessibilityStrings
     /// deshalb den Grund und nicht nur, dass es nicht ging.
     /// </summary>
     public static string OrderLastOneStays(string name) =>
-        IsGerman
-            ? $"{name} bleibt an - es ist die letzte eingeschaltete Kategorie."
-            : $"{name} stays on - it is the last category left switched on.";
+        Pick($"{name} bleibt an - es ist die letzte eingeschaltete Kategorie.",
+             $"{name} stays on - it is the last category left switched on.",
+             $"{name}, 켜짐 유지. 마지막으로 켜져 있는 분류임.");
 
     // ── Einstellungen: die Kanäle des GEWOHNTEN Chatsystems ───────
 
