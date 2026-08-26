@@ -6,7 +6,7 @@
          um Updates im Custom-Repo zu erkennen - bei JEDEM Release erhÃ¶hen, sonst
          zieht der Plugin-Installer keine neue Version. MUSS mit der PluginVersion-
          Konstante in Plugin.cs synchron bleiben (dort speist sie die Sprachansage). -->
-    <Version>5.93.0</Version>
+    <Version>5.93.0.0</Version>
     <AssemblyVersion>5.93.0.0</AssemblyVersion>
     <FileVersion>5.93.0.0</FileVersion>
     <Nullable>enable</Nullable>
