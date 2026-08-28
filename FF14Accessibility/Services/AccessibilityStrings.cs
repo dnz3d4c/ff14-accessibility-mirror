@@ -516,31 +516,29 @@ public static partial class AccessibilityStrings
                     $"{label}, 이 지역 {here}, 다른 지역 {away}"))
             : (Pick($"{label}: {here} im Gebiet.",
                     $"{label}: {here} in this area.",
-                    $"{label}, 이 지역 {here}"));
+                    $"{label}, {here}"));
 
     public static string CategoryWaypointCount(int count, int exits) =>
         exits > 0
             ? (Pick($"Wegpunkte: {count} im Gebiet, davon {exits} Übergänge.",
                     $"Waypoints: {count} in this area, {exits} of them exits.",
-                    $"경유지, 이 지역 {count}곳, 그중 다른 지역으로 넘어가는 통로 {exits}곳"))
+                    $"경유지, {count}곳, 다른 지역으로 넘어가는 통로 {exits}곳"))
             : (Pick($"Wegpunkte: {count} im Gebiet.",
                     $"Waypoints: {count} in this area.",
-                    $"경유지, 이 지역 {count}곳"));
+                    $"경유지, {count}곳"));
 
     public static string CategoryAetheryteCount(int count) =>
         Pick($"Ätheryten: {count} im Gebiet.",
              $"Aetherytes: {count} in this area.",
-             $"에테라이트, 이 지역 {count}곳");
+             $"에테라이트, {count}곳");
 
     // ── FATEs: aktive Welt-Ereignisse der Zone ──
     public static string CategoryFateCount(int active, int preparing) =>
         preparing > 0
             ? (Pick($"FATEs: {active} aktiv, {preparing} starten gleich.",
                     $"FATEs: {active} active, {preparing} starting soon.",
-                    $"돌발 임무, 이 지역 진행 중 {active}개, 곧 시작 {preparing}개"))
-            : (Pick($"FATEs: {active} aktiv.",
-                    $"FATEs: {active} active.",
-                    $"돌발 임무, 이 지역 진행 중 {active}개"));
+                    $"돌발 임무, 진행 중 {active}개, 곧 시작 {preparing}개"))
+            : (Pick($"FATEs: {active} aktiv.", $"FATEs: {active} active.", $"돌발 임무, 진행 중 {active}개"));
 
     /// <summary>One FATE line: name, level, then either the completion percent or,
     /// for a not-yet-started FATE, a "starting soon" note.</summary>
@@ -551,14 +549,14 @@ public static partial class AccessibilityStrings
             : $"{name}, level {level}, {(preparing ? "starting soon" : $"{progress} percent")}";
 
     public static string NoFatesInZone =>
-        Pick("Keine FATEs in diesem Gebiet.", "No FATEs in this area.", "이 지역에 돌발 임무 없음.");
+        Pick("Keine FATEs in diesem Gebiet.", "No FATEs in this area.", "돌발 임무 없음.");
 
     // ── Jagdziele: offene Monster des aktuellen Jagdtagebuch-Rangs ──
     public static string CategoryHuntingCount(int total, int here) =>
         here > 0
             ? (Pick($"Jagdziele: {total} offen, {here} in diesem Gebiet.",
                     $"Hunting targets: {total} open, {here} in this area.",
-                    $"토벌 대상, 남은 것 {total}종, 그중 이 지역 {here}종"))
+                    $"토벌 대상, 남은 것 {total}종, 이 지역 {here}종"))
             : (Pick($"Jagdziele: {total} offen, keines in diesem Gebiet.",
                     $"Hunting targets: {total} open, none in this area.",
                     $"토벌 대상, 남은 것 {total}종, 이 지역 없음"));
@@ -610,7 +608,7 @@ public static partial class AccessibilityStrings
     public static string CategoryWorldDutyCount(int total, int unlocked) =>
         Pick($"Alle Inhalte: {total}, davon {unlocked} freigeschaltet.",
              $"All duties: {total}, {unlocked} of them unlocked.",
-             $"전체 임무 {total}개, 그중 개방 {unlocked}개.");
+             $"전체 임무 {total}개, 개방 {unlocked}개.");
 
     /// <summary>Die Liste ist leer - kann nur passieren, wenn die Sheets nicht lesbar waren.</summary>
     public static string NoWorldDuties =>
@@ -770,12 +768,10 @@ public static partial class AccessibilityStrings
     public static string CategoryFishingCount(int count) =>
         Pick($"Angelplätze: {count} im Gebiet.",
              $"Fishing spots: {count} in this area.",
-             $"낚시터, 이 지역 {count}곳");
+             $"낚시터, {count}곳");
 
     public static string NoFishingSpots =>
-        Pick("Keine Angelplätze in diesem Gebiet.",
-             "No fishing spots in this area.",
-             "이 지역에 낚시터 없음.");
+        Pick("Keine Angelplätze in diesem Gebiet.", "No fishing spots in this area.", "낚시터 없음.");
 
     /// <summary>Spoken the moment the game reports the player can cast from where
     /// they stand and face - the orientation cue a blind fisher rotates until
@@ -788,7 +784,7 @@ public static partial class AccessibilityStrings
         Pick("Biss!", "Bite!", "입질.");
 
     public static string CategoryObjectCount(string label, int count) =>
-        Pick($"{label}: {count} in der Nähe.", $"{label}: {count} nearby.", $"{label}, 근처 {count}");
+        Pick($"{label}: {count} in der Nähe.", $"{label}: {count} nearby.", $"{label}, {count}");
 
     public static string NoObjectsInRange(string label, float range) =>
         Pick($"Keine {label} in {range:F0} Metern.",
@@ -1024,10 +1020,10 @@ public static partial class AccessibilityStrings
 
     public static string NoAetherytesFound => Pick("Keine Ätheryten in diesem Gebiet gefunden.",
                                                    "No aetherytes found in this area.",
-                                                   "이 지역에서 에테라이트를 찾을 수 없음.");
+                                                   "에테라이트를 찾을 수 없음.");
     public static string NoWaypointsFound  => Pick("Keine Wegpunkte in diesem Gebiet gefunden.",
                                                    "No waypoints found in this area.",
-                                                   "이 지역에서 경유지를 찾을 수 없음.");
+                                                   "경유지를 찾을 수 없음.");
     public static string NoNavmeshStraightLine => Pick("Kein Wegenetz, führe in Luftlinie.",
                                                        "No navmesh, guiding in a straight line.",
                                                        "길 정보 없음. 직선으로 안내함.");
@@ -1954,7 +1950,7 @@ public static partial class AccessibilityStrings
     public static string NoGatheringSpotsJob =>
         Pick("Keine Sammelstellen für deinen Beruf in dieser Zone.",
              "No gathering spots for your job in this area.",
-             "이 지역에 현재 직업으로 채집할 곳 없음.");
+             "현재 직업으로 채집할 곳 없음.");
     public static string GatheringSpotName(int level) =>
         Pick($"Sammelstelle, Stufe {level}", $"Gathering spot, level {level}", $"채집 지점, 레벨 {level}");
 
@@ -2368,10 +2364,10 @@ public static partial class AccessibilityStrings
                                                               $"연결 {number}");
     public static string TrailNoneHere => Pick("Keine Spuren in diesem Gebiet.",
                                                "No trails in this area.",
-                                               "이 지역에 발자취 없음.");
+                                               "발자취 없음.");
     public static string TrailCount(int count) => Pick($"{count} Spuren in diesem Gebiet.",
                                                        $"{count} trails in this area.",
-                                                       $"이 지역에 발자취 {count}개.");
+                                                       $"발자취 {count}개.");
     public static string TrailListEntry(int number, string name, float length, bool bothWays) =>
         Loc.IsKorean ? $"{number}: {name}, {MetersRemaining(length)}, {(bothWays ? "양방향" : "걸어간 방향만")}."
         : IsGerman
