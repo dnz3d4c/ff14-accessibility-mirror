@@ -42,7 +42,7 @@ public static partial class AccessibilityStrings
     public static string MenuGrabbed(string label, int index, int count) =>
         Pick($"{label} aufgenommen, {index} von {count}.",
              $"{label} picked up, {index} of {count}.",
-             $"{label} 집음, {count} 중 {index}.");
+             $"{label} 이동 시작, {count} 중 {index}.");
 
     /// <summary>Nach jedem Schritt: "Gegner, jetzt 3 von 21".</summary>
     public static string MenuMovedTo(string label, int index, int count) =>
@@ -490,7 +490,7 @@ public static partial class AccessibilityStrings
     public static string OrderHint =>
         Pick("Bestätigen nimmt eine Zeile auf, hoch und runter verschiebt sie, Bestätigen legt sie wieder ab.",
              "Confirm picks a row up, up and down move it, confirm puts it down again.",
-             "확인은 줄 집기, 위아래는 옮기기, 확인은 다시 놓기.");
+             "숫자패드 0은 줄 이동 시작, 8과 2는 위아래 이동, 다시 0은 놓기.");
 
     /// <summary>
     /// Wenn der Spieler die letzte eingeschaltete Kategorie abschalten will.
