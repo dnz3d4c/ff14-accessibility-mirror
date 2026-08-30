@@ -986,14 +986,14 @@ public sealed class NavigationService
             var steps = _dungeonRoute.GetStepsForCurrentZone();
             if (steps.Count == 0)
             {
-                _tolk.SpeakInterrupt(AccessibilityStrings.NoDungeonRoute);
+                Announce(AccessibilityStrings.NoDungeonRoute);
                 return;
             }
 
             // Ohne Spielerfigur gibt es kein "wo bin ich" - dann nennt die
             // Kopfansage die erste Station statt zu schweigen.
             var resume = _objectTable.LocalPlayer is { } me ? NextDungeonStepIndex(steps, me) : 0;
-            _tolk.SpeakInterrupt(AccessibilityStrings.CategoryDungeonCount(steps.Count, steps[resume].Number));
+            Announce(AccessibilityStrings.CategoryDungeonCount(steps.Count, steps[resume].Number));
             return;
         }
 
@@ -1015,7 +1015,7 @@ public sealed class NavigationService
                 known = true;
                 if (state == true) unlocked++;
             }
-            _tolk.SpeakInterrupt(known
+            Announce(known
                 ? AccessibilityStrings.CategoryWorldDutyCount(entries.Count, unlocked)
                 : AccessibilityStrings.CategoryObjectCount(CurrentCategoryLabel, entries.Count));
             return;
