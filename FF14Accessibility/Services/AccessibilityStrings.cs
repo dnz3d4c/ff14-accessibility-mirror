@@ -443,7 +443,7 @@ public static partial class AccessibilityStrings
         // Das Wort des Users (2026-08-29). Es steht bewusst neben "Inhalte" und
         // "Alle Inhalte", ohne sich mit ihnen zu schneiden: jene beiden führen zu
         // einer TÜR, diese führt DURCH das, was hinter ihr liegt.
-        NavCategory.DungeonRoute     => IsGerman ? "Dungeon"           : "Dungeon",
+        NavCategory.DungeonRoute     => Pick("Dungeon", "Dungeon", "던전"),
         _                            => cat.ToString(),
     };
 
@@ -624,9 +624,9 @@ public static partial class AccessibilityStrings
     /// "wie lang ist die Liste".
     /// </summary>
     public static string CategoryDungeonCount(int total, int next) =>
-        IsGerman
-            ? $"Dungeon: {total} Stationen, weiter bei {next}."
-            : $"Dungeon: {total} stations, continuing at {next}.";
+        Pick($"Dungeon: {total} Stationen, weiter bei {next}.",
+             $"Dungeon: {total} stations, continuing at {next}.",
+             $"던전: 지점 {total}개, 다음은 {next}번.");
 
     /// <summary>
     /// Für diesen Ort liegt keine Wegdatei vor. Wird gesagt und nicht
@@ -634,24 +634,24 @@ public static partial class AccessibilityStrings
     /// leerer Fall hier immer ein Hinweis, dass etwas mit der Datei nicht stimmt.
     /// </summary>
     public static string NoDungeonRoute =>
-        IsGerman
-            ? "Für diesen Ort ist kein Weg hinterlegt."
-            : "No route is stored for this place.";
+        Pick("Für diesen Ort ist kein Weg hinterlegt.",
+             "No route is stored for this place.",
+             "이곳에 기록된 경로 없음.");
 
     /// <summary>Wie eine Station heißt, die weder Art noch Namen trägt. Nur der
     /// Auto-Lauf braucht das Wort wirklich - er sagt "Laufe zu ...", und dort
     /// darf nichts Leeres stehen.</summary>
     public static string DungeonWaypointWord =>
-        IsGerman ? "Wegpunkt" : "waypoint";
+        Pick("Wegpunkt", "waypoint", "경유지");
 
     /// <summary>Die Art einer Station, gesprochen. Ein reiner Wegpunkt trägt
     /// keine Art - er heißt nur nach seiner Nummer, alles andere wäre Füllwort.</summary>
     public static string DungeonStepKindWord(DungeonStepKind kind) => kind switch
     {
-        DungeonStepKind.Interact => IsGerman ? "benutzen"      : "interact",
-        DungeonStepKind.Boss     => IsGerman ? "Boss"          : "boss",
-        DungeonStepKind.Treasure => IsGerman ? "Schatztruhe"   : "treasure coffer",
-        DungeonStepKind.Jump     => IsGerman ? "springen"      : "jump",
+        DungeonStepKind.Interact => Pick("benutzen", "interact", "사용"),
+        DungeonStepKind.Boss     => Pick("Boss", "boss", "우두머리"),
+        DungeonStepKind.Treasure => Pick("Schatztruhe", "treasure coffer", "보물상자"),
+        DungeonStepKind.Jump     => Pick("springen", "jump", "점프"),
         _                        => string.Empty,
     };
 
@@ -668,7 +668,7 @@ public static partial class AccessibilityStrings
     public static string DungeonStepEntry(
         int number, int total, string kindWord, string name, string distance, string direction)
     {
-        var head = IsGerman ? $"{number} von {total}" : $"{number} of {total}";
+        var head = Pick($"{number} von {total}", $"{number} of {total}", $"{total} 중 {number}");
 
         // Art und Name sind beide oft da, oft nur eines, manchmal keines - ein
         // Wegpunkt hat weder das eine noch das andere. Zusammensetzen statt
@@ -682,9 +682,7 @@ public static partial class AccessibilityStrings
     /// <summary>Die letzte Station ist erreicht. Der Dungeon endet mit einem
     /// Boss, also ist das eine echte Auskunft und kein Listenende.</summary>
     public static string DungeonRouteEnd =>
-        IsGerman
-            ? "Letzte Station des Wegs."
-            : "Last station of the route.";
+        Pick("Letzte Station des Wegs.", "Last station of the route.", "경로의 마지막 지점.");
 
     /// <summary>Die Liste ist leer - kann nur passieren, wenn die Sheets nicht lesbar waren.</summary>
     public static string NoWorldDuties =>
@@ -1146,12 +1144,16 @@ public static partial class AccessibilityStrings
     public static string RouteClimb(float up, float down)
     {
         if (up > 0f && down > 0f)
-            return IsGerman
-                ? $" Dabei {up:F0} Meter aufwärts und {down:F0} Meter abwärts."
-                : $" Along the way {up:F0} meters up and {down:F0} meters down.";
+            return Pick($" Dabei {up:F0} Meter aufwärts und {down:F0} Meter abwärts.",
+                        $" Along the way {up:F0} meters up and {down:F0} meters down.",
+                        $" 도중 위로 {up:F0}미터, 아래로 {down:F0}미터.");
         if (up > 0f)
-            return IsGerman ? $" Dabei {up:F0} Meter aufwärts." : $" Along the way {up:F0} meters up.";
-        return IsGerman ? $" Dabei {down:F0} Meter abwärts." : $" Along the way {down:F0} meters down.";
+            return Pick($" Dabei {up:F0} Meter aufwärts.",
+                        $" Along the way {up:F0} meters up.",
+                        $" 도중 위로 {up:F0}미터.");
+        return Pick($" Dabei {down:F0} Meter abwärts.",
+                    $" Along the way {down:F0} meters down.",
+                    $" 도중 아래로 {down:F0}미터.");
     }
 
     // ── Datenzentrums-Auswahl (TitleDCWorldMap) ──────────────────────
