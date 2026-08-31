@@ -412,7 +412,7 @@ public static partial class AccessibilityStrings
         // Das Wort des Users (2026-08-29). Es steht bewusst neben "Inhalte" und
         // "Alle Inhalte", ohne sich mit ihnen zu schneiden: jene beiden führen zu
         // einer TÜR, diese führt DURCH das, was hinter ihr liegt.
-        NavCategory.DungeonRoute     => IsGerman ? "Dungeon"           : "Dungeon",
+        NavCategory.DungeonRoute     => Pick("Dungeon", "Dungeon"),
         _                            => cat.ToString(),
     };
 
