@@ -636,7 +636,7 @@ public static partial class AccessibilityStrings
     public static string NoDungeonRoute =>
         Pick("Für diesen Ort ist kein Weg hinterlegt.",
              "No route is stored for this place.",
-             "이곳의 경로 파일 없음.");
+             "해당 던전 경로 파일 없음.");
 
     /// <summary>Wie eine Station heißt, die weder Art noch Namen trägt. Nur der
     /// Auto-Lauf braucht das Wort wirklich - er sagt "Laufe zu ...", und dort
