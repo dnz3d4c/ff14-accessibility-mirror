@@ -1267,7 +1267,7 @@ public static partial class AccessibilityStrings
     // "Hand Over" is the EN client's button; verify against an EN dump in Teil 2.
     public static string DeliveryOpen => Pick("Gegenstand abliefern. Drücke Strg F3 für die passenden Gegenstände, dann auswählen und Übergeben.",
                                               "Hand over item. Press Ctrl F3 for the matching items, then select and Hand Over.",
-                                              "아이템 건네주기. 컨트롤 F3은 맞는 아이템 찾기, 고른 다음 건네주기 누르기.");
+                                              "아이템 건네주기. 컨트롤 F3은 맞는 아이템 찾기, 선택한 다음 건네주기 누르기.");
     public static string DeliveryItems(IReadOnlyList<string> items) => items.Count switch
     {
         0 => Pick("Keine passenden Gegenstände im Beutel gefunden.",
