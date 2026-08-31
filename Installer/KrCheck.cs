@@ -30,13 +30,14 @@ internal static class KrCheck
     ///
     /// Returns a process exit code: 0 when an installed copy is on disk afterwards.
     /// </summary>
-    public static int RunInstall(bool skipVnavmesh)
+    public static int RunInstall(bool skipVnavmesh, bool skipDungeonPaths = false)
     {
         if (!AttachConsole(-1)) AllocConsole();
 
         var service = new InstallerService
         {
             SkipVnavmesh = skipVnavmesh,
+            SkipDungeonPaths = skipDungeonPaths,
             SkipSelfUpdate = true,
             // Install the zip this EXE was shipped next to, not whatever the
             // release channel currently holds. tools/pack-check measures the

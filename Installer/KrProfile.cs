@@ -191,6 +191,40 @@ internal static class KrProfile
     public static readonly string ConfigPath = Path.Combine(Root, "dalamudConfig.json");
     public static readonly string LogPath = Path.Combine(Root, "dalamud-kr-gui.log");
 
+    // ── Dungeon route files ───────────────────────────────────────────────
+    //
+    // These four are mirrored in tools/kr-setup/kr_profile.py and a test fails
+    // if the two drift apart.
+    //
+    // The PLUGIN reads this folder but never creates it - DungeonRouteService
+    // only calls Directory.Exists and hides the whole category when it is
+    // missing. If the installer does not make it, the user is left with a
+    // "create this folder yourself" instruction that nothing else needs.
+
+    /// <summary>Where plugin configuration lives. Dalamud hands out
+    /// <c>&lt;Root&gt;/pluginConfigs/&lt;plugin&gt;/</c> from
+    /// <c>GetPluginConfigDirectory()</c>.</summary>
+    public const string PluginConfigFolder = "pluginConfigs";
+
+    /// <summary>The folder the mod reads inside its own config directory.
+    /// Same value as <c>DungeonRouteService.FolderName</c>.</summary>
+    public const string DungeonPathsFolder = "DungeonPaths";
+
+    /// <summary>Where the route files come from. The repository carries no
+    /// licence, so we may not REDISTRIBUTE them - fetching them on the user's
+    /// behalf is a different act, and it is the one already applied to vnavmesh
+    /// and to the Korean Dalamud updater.</summary>
+    public const string PathsSourceRepo = "ffxivcode/AutoDuty";
+
+    /// <summary>The folder inside that repository. File names are already
+    /// <c>(TerritoryId) Name.json</c>, which is exactly what the mod's regex
+    /// expects - 254 files as of 2026-08-31.</summary>
+    public const string PathsSourceDir = "AutoDuty/Paths";
+
+    /// <summary>Full path to the folder the mod reads.</summary>
+    public static readonly string DungeonPathsRoot = Path.Combine(
+        Root, PluginConfigFolder, "FF14Accessibility", DungeonPathsFolder);
+
     // ── The Korean Dalamud updater ────────────────────────────────────────
     //
     // These five constants are mirrored in tools/kr-setup/kr_profile.py and a

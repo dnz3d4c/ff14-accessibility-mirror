@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 
 namespace FF14AccessibilityInstaller;
@@ -219,6 +220,10 @@ public sealed partial class InstallerService
             Info(string.Empty);
             var vnavResult = SkipVnavmesh ? Loc.Get("SkippedShort") : await UpdateVnavmeshAsync();
             Info(string.Empty);
+            var pathsResult = SkipDungeonPaths
+                ? Loc.Get("SkippedShort")
+                : await UpdateDungeonPathsAsync();
+            Info(string.Empty);
             var patchResult = PatchDalamudConfig();
             Info(string.Empty);
             var playResult = InstallPlayLauncher();
@@ -227,6 +232,7 @@ public sealed partial class InstallerService
             Info(Loc.Get("SummaryHeader"));
             Info(Loc.Get("SummaryAccessibility", accResult));
             Info(Loc.Get("SummaryVnavmesh", vnavResult));
+            Info(Loc.Get("SummaryDungeonPaths", pathsResult));
             Info(Loc.Get("SummaryPlayLauncher", playResult));
             Info(patchResult);
         }
@@ -1236,6 +1242,39 @@ public sealed partial class InstallerService
         if (ReadLocalManifestVersion(manifestPath) != null) return;
 
         _vnavmeshWanted = AskAboutVnavmesh();
+        AskAboutDungeonPathsUpFront();
+    }
+
+    /// <summary>
+    /// The answer to the route-files question when it was taken ahead of time.
+    /// </summary>
+    private bool? _dungeonPathsWanted;
+
+    /// <summary>
+    /// Takes the route-files answer while this window is still in front. Same
+    /// reason as the vnavmesh one directly above: past the updater launch the
+    /// dialog would open behind that window (W-61).
+    /// </summary>
+    private void AskAboutDungeonPathsUpFront()
+    {
+        if (SkipDungeonPaths || _dungeonPathsWanted is not null) return;
+
+        // Already there means the step will only ever refresh it, and a refresh
+        // is not asked about - same rule as vnavmesh.
+        if (File.Exists(DungeonPathsStampPath)) return;
+
+        _dungeonPathsWanted = AskAboutDungeonPaths();
+    }
+
+    /// <summary>What the route files are and where they come from, then the
+    /// question. Three lines before it, the way the other two questions do.</summary>
+    private bool AskAboutDungeonPaths()
+    {
+        Info(string.Empty);
+        Info(Loc.Get("DungeonPathsWhat1"));
+        Info(Loc.Get("DungeonPathsWhat2"));
+        Info(Loc.Get("DungeonPathsWhat3"));
+        return AskYesNo?.Invoke(Loc.Get("AskSetupDungeonPaths")) ?? false;
     }
 
     /// <summary>What vnavmesh is and where it comes from, then the question.</summary>
@@ -1964,6 +2003,198 @@ public sealed partial class InstallerService
     }
 
     // ── Download / Entpacken ───────────────────────────────────────────────
+
+    // ── Dungeon route files ───────────────────────────────────────────────
+    //
+    // The mod reads them, never ships them, and never creates the folder. We
+    // fetch them for the user - the source repository carries no licence, so
+    // REDISTRIBUTING them is out, but fetching on the user's behalf is the same
+    // act already applied to vnavmesh and the Korean updater.
+
+    /// <summary>Whether to leave the route files alone entirely.</summary>
+    public bool SkipDungeonPaths { get; set; }
+
+    /// <summary>Our own stamp, written next to the files.
+    ///
+    /// The bundle carries no manifest of its own, so there is nothing upstream
+    /// to compare against. We record the commit sha the folder came from and
+    /// compare strings - it is an IDENTITY, not a version, so no ordering
+    /// comparison: if the source reverts, the sha moves backwards and
+    /// "different means fetch" is still the right answer.
+    ///
+    /// File count and mtime are deliberately not used. That folder belongs to
+    /// the USER - they may drop their own files in or edit one - so counting
+    /// 254 proves nothing about content, and mtime flips on any copy.</summary>
+    private static string DungeonPathsStampPath =>
+        Path.Combine(KrProfile.DungeonPathsRoot, ".source.json");
+
+    private async Task<string> UpdateDungeonPathsAsync()
+    {
+        var folder = KrProfile.DungeonPathsRoot;
+        var localSha = ReadDungeonPathsStamp();
+
+        string? remoteSha;
+        try
+        {
+            remoteSha = await FetchDungeonPathsShaAsync();
+        }
+        catch (Exception ex)
+        {
+            // Same shape as VnavmeshPunishUnreachable: say we could not check,
+            // keep what is already there. Deleting on a failed check would take
+            // working files away over a network hiccup.
+            if (localSha != null)
+            {
+                Info(Loc.Get("DungeonPathsCheckFailed", ex.Message));
+                return Loc.Get("UpToDateShort", Loc.Get("DungeonPathsUnchecked"));
+            }
+            remoteSha = null;
+        }
+
+        if (localSha != null && remoteSha != null && localSha == remoteSha)
+        {
+            Info(Loc.Get("DungeonPathsUpToDate"));
+            return Loc.Get("UpToDateShort", localSha[..Math.Min(7, localSha.Length)]);
+        }
+
+        if (localSha == null && !(_dungeonPathsWanted ?? AskAboutDungeonPaths()))
+        {
+            // Make the folder anyway. The plugin never creates it (it only calls
+            // Directory.Exists), so a user who later wants to drop files in by
+            // hand would otherwise have to know both the path AND that it has
+            // to be created. Saying no to our fetch is not saying no to the
+            // feature.
+            Directory.CreateDirectory(folder);
+            Info(Loc.Get("DungeonPathsSkipped"));
+            Info(Loc.Get("DungeonPathsFolderMade", folder));
+            return Loc.Get("SkippedShort");
+        }
+
+        var zipPath = Path.Combine(
+            Path.GetTempPath(), "autoduty_" + Guid.NewGuid() + ".zip");
+        var stagingDir = Path.Combine(
+            Path.GetTempPath(), "autoduty_" + Guid.NewGuid());
+        try
+        {
+            Info(Loc.Get("DownloadingDungeonPaths"));
+            // The whole repository as one zip, not 254 separate files. Rate
+            // limit and atomicity decide this, not size: the Contents API would
+            // die at 60/hour, and a partial fetch leaves a HALF-FILLED folder
+            // that the mod reads as normal - a failure nobody can see.
+            // Codeload does not count against the API budget.
+            await DownloadFileAsync(
+                $"https://codeload.github.com/{KrProfile.PathsSourceRepo}/zip/refs/heads/master",
+                zipPath, Loc.Get("DungeonPathsLabel"));
+
+            Directory.CreateDirectory(stagingDir);
+            var copied = ExtractDungeonPaths(zipPath, stagingDir);
+            if (copied == 0)
+            {
+                Info(Loc.Get("DungeonPathsEmpty"));
+                return Loc.Get("ErrorShort");
+            }
+
+            // Copy, never wipe. The user may have put their own files here.
+            Directory.CreateDirectory(folder);
+            foreach (var file in Directory.GetFiles(stagingDir, "*.json"))
+                File.Copy(file, Path.Combine(folder, Path.GetFileName(file)), overwrite: true);
+
+            WriteDungeonPathsStamp(remoteSha);
+            Info(Loc.Get("DungeonPathsInstalled", copied));
+            return Loc.Get("NewlyInstalledShort", copied.ToString());
+        }
+        catch (Exception ex)
+        {
+            Info(Loc.Get("DungeonPathsFailed", ex.Message));
+            return Loc.Get("ErrorShort");
+        }
+        finally
+        {
+            TryDelete(zipPath);
+            TryDeleteDirectory(stagingDir);
+        }
+    }
+
+    /// <summary>Unpacks the route files into <paramref name="target"/>, flat.
+    /// Returns how many were taken.</summary>
+    private static int ExtractDungeonPaths(string zipPath, string target)
+    {
+        var wanted = KrProfile.PathsSourceDir.Replace('\\', '/');
+        var taken = 0;
+        using var archive = ZipFile.OpenRead(zipPath);
+        foreach (var entry in archive.Entries)
+        {
+            if (entry.Length == 0) continue;              // directory entry
+            var path = entry.FullName.Replace('\\', '/');
+            // The zip root is "<repo>-<branch>/", strip it before matching.
+            var slash = path.IndexOf('/');
+            if (slash < 0) continue;
+            var inner = path[(slash + 1)..];
+            if (!inner.StartsWith(wanted + "/", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var name = Path.GetFileName(inner);
+            // Name filter, not just extension. A .json the mod will never read
+            // is dead weight in a folder the user has to live with, and the
+            // mod's own regex is the only authority on what it reads.
+            if (!DungeonPathNamePattern.IsMatch(Path.GetFileNameWithoutExtension(name)))
+                continue;
+
+            // Zip slip: someone else's archive, so the resolved destination has
+            // to stay inside the target folder.
+            var destination = Path.GetFullPath(Path.Combine(target, name));
+            if (!destination.StartsWith(
+                    Path.GetFullPath(target) + Path.DirectorySeparatorChar,
+                    StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            entry.ExtractToFile(destination, overwrite: true);
+            taken++;
+        }
+        return taken;
+    }
+
+    /// <summary>Same rule as <c>DungeonRouteService.FileNamePattern</c>.</summary>
+    private static readonly Regex DungeonPathNamePattern =
+        new(@"^\((?<id>\d+)\)\s*(?<rest>.*)$", RegexOptions.Compiled);
+
+    private static string? ReadDungeonPathsStamp()
+    {
+        try
+        {
+            if (!File.Exists(DungeonPathsStampPath)) return null;
+            using var doc = JsonDocument.Parse(File.ReadAllText(DungeonPathsStampPath));
+            return doc.RootElement.TryGetProperty("Sha", out var sha)
+                   && sha.ValueKind == JsonValueKind.String
+                ? sha.GetString()
+                : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static void WriteDungeonPathsStamp(string? sha)
+    {
+        Directory.CreateDirectory(KrProfile.DungeonPathsRoot);
+        var value = sha is null ? "null" : "\"" + sha + "\"";
+        File.WriteAllText(DungeonPathsStampPath, "{\"Sha\": " + value + "}\n");
+    }
+
+    private async Task<string?> FetchDungeonPathsShaAsync()
+    {
+        var url = $"https://api.github.com/repos/{KrProfile.PathsSourceRepo}"
+                  + $"/commits?path={Uri.EscapeDataString(KrProfile.PathsSourceDir)}&per_page=1";
+        using var response = await _http.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        if (doc.RootElement.ValueKind != JsonValueKind.Array
+            || doc.RootElement.GetArrayLength() == 0)
+            return null;
+        return doc.RootElement[0].TryGetProperty("sha", out var sha)
+            ? sha.GetString()
+            : null;
+    }
 
     private async Task DownloadFileAsync(string url, string destinationPath, string label)
     {

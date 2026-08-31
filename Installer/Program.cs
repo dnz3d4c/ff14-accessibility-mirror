@@ -25,7 +25,9 @@ internal static class Program
         if (Array.IndexOf(args, "--install") >= 0)
         {
             Loc.Current = Loc.LoadSavedLanguage() ?? DefaultLanguage();
-            Environment.ExitCode = KrCheck.RunInstall(Array.IndexOf(args, "--skip-vnavmesh") >= 0);
+            Environment.ExitCode = KrCheck.RunInstall(
+                Array.IndexOf(args, "--skip-vnavmesh") >= 0,
+                Array.IndexOf(args, "--skip-dungeon-paths") >= 0);
             return;
         }
 
