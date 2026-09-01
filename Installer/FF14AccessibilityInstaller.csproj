@@ -13,7 +13,7 @@
          nach Rueckfrage selbst (InstallerService.TrySelfUpdateAsync + SelfUpdate).
          MUSS beim Release mit dem Feld InstallerVersion in installer.json
          uebereinstimmen, sonst bietet der Installer das Update endlos erneut an. -->
-    <Version>1.2.2</Version>
+    <Version>1.2.2.0</Version>
     <AssemblyVersion>1.2.2.0</AssemblyVersion>
     <FileVersion>1.2.2.0</FileVersion>
     <!-- Barrierefreiheit: WinForms-GUI. Standardcontrols (Label, TextBox, Button)
