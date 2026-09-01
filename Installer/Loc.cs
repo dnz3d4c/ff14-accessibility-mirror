@@ -818,6 +818,17 @@ public static class Loc
             ["SummaryHeader"] = "== 결과 ==",
             ["SummaryAccessibility"] = "접근성 모드: {0}",
             ["SummaryVnavmesh"] = "vnavmesh: {0}",
+            ["SummaryDungeonPaths"] = "던전 경로: {0}",
+
+            ["CheckingDungeonPaths"] = "던전 분류에 쓸 경로 파일을 받는 중입니다 ...",
+            ["DungeonPathsWritten"] = "경로 파일 {0}개를 {1}에 저장했습니다",
+            ["DungeonPathsSummary"] = "경로 {0}개를 받았습니다",
+            ["DungeonPathsUnreachable"] = "지금은 경로 파일에 연결할 수 없습니다({0}). 플러그인이 처음 실행될 때 직접 받아 옵니다.",
+            ["DungeonPathsTimeout"] = "경로 파일을 받는 중에 시간이 초과되었습니다. 플러그인이 처음 실행될 때 직접 받아 옵니다.",
+            ["DungeonPathsNothingInArchive"] = "받은 압축 파일에 경로 파일이 하나도 없습니다. 출처의 구성이 바뀌었습니다.",
+            ["DungeonPathsArchiveTooBig"] = "압축 파일이 예상보다 커서 풀지 않았습니다.",
+            ["DungeonPathsUnexpectedError"] = "경로 파일을 저장하지 못했습니다: {0}",
+
             ["UnexpectedError"] = "예상하지 못한 오류: {0}",
             ["NoPartialWrite"] = "중간까지 쓰다 만 것은 없습니다.",
             ["UnexpectedErrorWhere"] = "어디까지 진행됐는지는 위의 진행 상황 줄에서 확인할 수 있습니다.",
