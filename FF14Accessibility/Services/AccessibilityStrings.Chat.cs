@@ -449,39 +449,43 @@ public static partial class AccessibilityStrings
     /// müsste man den Abschnitt öffnen, um die einzige Frage zu beantworten, die
     /// er beantwortet.</summary>
     public static string OptionsDungeonPaths(int files) =>
-        IsGerman ? $"Dungeon-Wege, {files} geladen" : $"Dungeon routes, {files} loaded";
+        Pick($"Dungeon-Wege, {files} geladen",
+             $"Dungeon routes, {files} loaded",
+             $"던전 경로, {files}개 있음");
 
     public static string DungeonPathsTitle =>
-        IsGerman ? "Dungeon-Wege" : "Dungeon routes";
+        Pick("Dungeon-Wege", "Dungeon routes", "던전 경로");
 
     /// <summary>Die Zeile, die das Laden auslöst.</summary>
     public static string DungeonPathsFetchNow =>
-        IsGerman ? "Jetzt herunterladen" : "Download now";
+        Pick("Jetzt herunterladen", "Download now", "지금 다운로드");
 
     public static string DungeonPathsAutoName =>
-        IsGerman ? "Automatisch herunterladen" : "Download automatically";
+        Pick("Automatisch herunterladen", "Download automatically", "자동 다운로드");
 
     /// <summary>Quittung beim Start des Ladens. Sie muss sein: der Download
     /// dauert Sekunden, und ein Menü, das auf einen Tastendruck schweigt, ist von
     /// einem, das den Druck verschluckt hat, nicht zu unterscheiden.</summary>
     public static string DungeonPathsFetching =>
-        IsGerman ? "Dungeon-Wege werden geladen." : "Downloading dungeon routes.";
+        Pick("Dungeon-Wege werden geladen.", "Downloading dungeon routes.", "던전 경로 다운로드 중.");
 
     public static string DungeonPathsFetched(int files) =>
-        IsGerman ? $"{files} Dungeon-Wege geladen." : $"{files} dungeon routes loaded.";
+        Pick($"{files} Dungeon-Wege geladen.",
+             $"{files} dungeon routes loaded.",
+             $"던전 경로 {files}개 다운로드됨.");
 
     /// <summary>Fehlschlag. Nennt den Ordner NICHT - der Pfad ist als Ansage
     /// unbrauchbar lang; er steht im Log und in der Anleitung.</summary>
     public static string DungeonPathsFailed =>
-        IsGerman
-            ? "Dungeon-Wege konnten nicht geladen werden. Sieh ins Log."
-            : "Dungeon routes could not be downloaded. Check the log.";
+        Pick("Dungeon-Wege konnten nicht geladen werden. Sieh ins Log.",
+             "Dungeon routes could not be downloaded. Check the log.",
+             "던전 경로 다운로드 실패. 로그 확인 필요.");
 
     /// <summary>Wann zuletzt geladen wurde, oder dass es das noch nie gab.</summary>
     public static string DungeonPathsLast(string date) =>
         string.IsNullOrEmpty(date)
-            ? (IsGerman ? "Zuletzt geladen: nie" : "Last downloaded: never")
-            : (IsGerman ? $"Zuletzt geladen: {date}" : $"Last downloaded: {date}");
+            ? (Pick("Zuletzt geladen: nie", "Last downloaded: never", "마지막 다운로드: 없음"))
+            : (Pick($"Zuletzt geladen: {date}", $"Last downloaded: {date}", $"마지막 다운로드: {date}"));
 
     /// <summary>Der Abschnitt für die Objekt-Browser-Kategorien. "Objekte
     /// durchblättern" und nicht "Kategorien", weil der Spieler die Liste über die

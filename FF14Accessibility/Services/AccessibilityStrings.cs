@@ -2858,7 +2858,7 @@ public static partial class AccessibilityStrings
     public static string GaugeAttunement(string type, byte count) =>
         IsGerman ? $"{type} {count}" : $"{type} {count}";
     public static string GaugeNothingReady =>
-        IsGerman ? "Nichts bereit." : "Nothing ready.";
+        Pick("Nichts bereit.", "Nothing ready.", "준비된 것 없음.");
     public static string GaugeNoneForJob =>
         IsGerman
             ? "Für diesen Job gibt es keine Anzeige."
